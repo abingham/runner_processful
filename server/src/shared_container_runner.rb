@@ -12,7 +12,8 @@ require 'timeout'
 # inside the kata's container.
 #
 # Negatives:
-#   o) long-lived container per run() is harder to secure.
+#   o) harder to secure.
+#   o) uses more host resources.
 #
 # Positives:
 #   o) avatars can share state.
@@ -193,9 +194,6 @@ class SharedContainerRunner
 
   private
 
-  include StringCleaner
-  include StringTruncater
-
   def image_names
     cmd = 'docker images --format "{{.Repository}}"'
     stdout,_ = assert_exec(cmd)
@@ -286,6 +284,9 @@ class SharedContainerRunner
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
+
+  include StringCleaner
+  include StringTruncater
 
   def run_timeout(cmd, max_seconds)
     r_stdout, w_stdout = IO.pipe
