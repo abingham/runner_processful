@@ -55,9 +55,6 @@ class Anna
   def disk
     @disk  ||=  DummyDisk.new('anna')
   end
-  def store
-    @store ||= DummyStore.new('anna')
-  end
 end
 
 # - - - - - - - - - - - - - - - - - - - - - - - -

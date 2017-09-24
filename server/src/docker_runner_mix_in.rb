@@ -56,11 +56,6 @@ module DockerRunnerMixIn
     40000 + all_avatars_names.index(avatar_name)
   end
 
-  def home_dir(avatar_name)
-    assert_valid_avatar_name(avatar_name)
-    "/home/#{avatar_name}"
-  end
-
   def avatar_dir(avatar_name)
     assert_valid_avatar_name(avatar_name)
     "#{sandboxes_root_dir}/#{avatar_name}"
@@ -292,10 +287,6 @@ module DockerRunnerMixIn
 
   def disk
     nearest_ancestors(:disk)
-  end
-
-  def log
-    nearest_ancestors(:log)
   end
 
 end

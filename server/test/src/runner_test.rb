@@ -39,10 +39,6 @@ class RunnerTest < TestBase
 
   private
 
-  def assert_runner_class(image_name, expected)
-    assert_equal expected, new_runner(image_name, kata_id).class.name
-  end
-
   def invalid_image_names
     [
       '',             # nothing!
