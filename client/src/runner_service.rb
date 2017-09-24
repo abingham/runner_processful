@@ -56,7 +56,7 @@ class RunnerService
   include HttpJsonService
 
   def hostname
-    'runner'
+    'runner_processful'
   end
 
   def port

@@ -2,7 +2,9 @@ require_relative 'test_base'
 
 class RunnerTest < TestBase
 
-  def self.hex_prefix; '4C8DB'; end
+  def self.hex_prefix
+    '4C8DB'
+  end
 
   # - - - - - - - - - - - - - - - - -
 
@@ -34,18 +36,6 @@ class RunnerTest < TestBase
   %w( runner with valid image_name and valid kata_id does not raise ) do
     new_runner('cdf/gcc_assert', kata_id)
   end
-
-  # - - - - - - - - - - - - - - - - -
-
-  test 'D02',
-  %w( default runner is SharedVolumeRunner ) do
-    assert_runner_class 'cdf/gcc_assert', 'SharedVolumeRunner'
-    assert_runner_class 'cdf/gcc_assert:1.2', 'SharedVolumeRunner'
-    assert_runner_class 'quay.io:8080/cdf/gcc_assert:latest', 'SharedVolumeRunner'
-    assert_runner_class 'localhost/cdf/gcc_assert:1.2', 'SharedVolumeRunner'
-  end
-
-  # - - - - - - - - - - - - - - - - -
 
   private
 

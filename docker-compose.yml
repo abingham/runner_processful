@@ -2,7 +2,7 @@
 version: '2'
 
 services:
-  runner_processful_client:
+  runner-processful-client:
     user: nobody
     image: cyberdojo/runner_processful_client
     container_name: runner_processful_client
