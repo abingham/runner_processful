@@ -60,7 +60,7 @@ class RunnerService
   end
 
   def port
-    '4557'
+    '4547'
   end
 
 end
