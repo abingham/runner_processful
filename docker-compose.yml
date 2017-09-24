@@ -2,17 +2,17 @@
 version: '2'
 
 services:
-  runner_client:
+  runner_processful_client:
     user: nobody
-    image: cyberdojo/runner_client
-    container_name: runner_client
+    image: cyberdojo/runner_processful_client
+    container_name: runner_processful_client
     read_only: true
     tmpfs: /tmp
     depends_on:
-      - runner
-      - runner-client-coverage-container
+      - runner-processful
+      - runner-processful-client-coverage-container
     volumes_from:
-      - runner-client-coverage-container:rw
+      - runner-processful-client-coverage-container:rw
     environment:
       - CYBER_DOJO_COVERAGE_ROOT
     build:
@@ -22,18 +22,18 @@ services:
     ports:
       - ${CYBER_DOJO_RUNNER_CLIENT_PORT}:${CYBER_DOJO_RUNNER_CLIENT_PORT}
 
-  runner:
+  runner-processful:
     user: root
-    image: cyberdojo/runner
-    container_name: runner_server
+    image: cyberdojo/runner_processful
+    container_name: runner_processful_server
     read_only: true
     tmpfs: /tmp
     depends_on:
-      - runner-server-coverage-container
+      - runner-processful-server-coverage-container
     volumes:
       - '/var/run/docker.sock:/var/run/docker.sock'
     volumes_from:
-      - runner-server-coverage-container:rw
+      - runner-processful-server-coverage-container:rw
     environment:
       - CYBER_DOJO_COVERAGE_ROOT
     build:
@@ -43,16 +43,16 @@ services:
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  runner-client-coverage-container:
-    image: cyberdojo/runner_client
-    container_name: runner-client-coverage-container
+  runner-processful-client-coverage-container:
+    image: cyberdojo/runner_processful_client
+    container_name: runner-processful-client-coverage-container
     volumes:
       - /${CYBER_DOJO_COVERAGE_ROOT}
     command: "chown nobody:nobody ${CYBER_DOJO_COVERAGE_ROOT}"
 
 
-  runner-server-coverage-container:
-    image: cyberdojo/runner
-    container_name: runner-server-coverage-container
+  runner-processful-server-coverage-container:
+    image: cyberdojo/runner_processful
+    container_name: runner-processful-server-coverage-container
     volumes:
       - /${CYBER_DOJO_COVERAGE_ROOT}

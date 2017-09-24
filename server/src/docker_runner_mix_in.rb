@@ -136,18 +136,18 @@ module DockerRunnerMixIn
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def delete_files(cid, avatar_name, pathed_filenames)
+  def delete_files(avatar_name, pathed_filenames)
     # most of the time pathed_filenames == []
     pathed_filenames.each do |pathed_filename|
       dir = avatar_dir(avatar_name)
-      assert_docker_exec(cid, "rm #{dir}/#{pathed_filename}")
+      assert_docker_exec("rm #{dir}/#{pathed_filename}")
     end
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def run_cyber_dojo_sh(cid, avatar_name, files, max_seconds)
-    # See comment at end of file about slower alternative.
+  def write_files(avatar_name, files)
+    return if files == {}
     Dir.mktmpdir('runner') do |tmp_dir|
       # save the files onto the host...
       files.each do |pathed_filename, content|
@@ -160,7 +160,6 @@ module DockerRunnerMixIn
         disk.write(host_filename, content)
       end
       # ...then tar-pipe them into the container
-      # and run cyber-dojo.sh
       dir = avatar_dir(avatar_name)
       uid = user_id(avatar_name)
       tar_pipe = [
@@ -176,7 +175,7 @@ module DockerRunnerMixIn
                   'docker exec',  # pipe the tarfile into docker container
                     "--user=#{uid}:#{gid}",
                     '--interactive',
-                    cid,
+                    container_name,
                     'sh -c',
                     "'",          # open quote
                     "cd #{dir}",
@@ -185,25 +184,14 @@ module DockerRunnerMixIn
                           '-',    # which is read from stdin
                           '-C',   # save the extracted files to
                           '.',    # the current directory
-                    '&& sh ./cyber-dojo.sh',
                     "'"           # close quote
       ].join(space)
       # Note: this tar-pipe stores file date-stamps to the second.
       # In other words, the microseconds are always zero.
       # This is very unlikely to matter for a real test-event from
       # the browser but could matter in tests.
-      if files == {}
-        cyber_dojo_sh = [
-          'docker exec',
-          "--user=#{uid}:#{gid}",
-          '--interactive',
-          cid,
-          "sh -c 'cd #{dir} && sh ./cyber-dojo.sh'"
-        ].join(space)
-        run_timeout(cyber_dojo_sh, max_seconds)
-      else
-        run_timeout(tar_pipe, max_seconds)
-      end
+      #run_timeout(tar_pipe, max_seconds)
+      assert_exec(tar_pipe)
     end
   end
 
@@ -313,14 +301,12 @@ module DockerRunnerMixIn
 end
 
 # - - - - - - - - - - - - - - - - - - - - - - - -
-# The implementation of run_cyber_dojo_sh is
+# The implementation of write_files() is
 #   o) Create copies of all (changed) files off /tmp
 #   o) Tar pipe the /tmp files into the container
-#   o) Run cyber-dojo.sh inside the container
 #
 # An alternative implementation is
 #   o) Tar pipe each file's content directly into the container
-#   o) Run cyber-dojo.sh inside the container
 #
 # If only one file has changed you might image this is quicker
 # but testing shows its actually a bit slower.

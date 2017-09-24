@@ -5,10 +5,10 @@
 # Better and simpler to use an image label.
 
 def runner_class_name
-  class_name = 'SharedVolumeRunner'   # default
+  class_name = 'SharedContainerRunner'   # default
   # dynamically load Ruby file so coverage stats
   # don't include the runner that's not being used.
-  autoload(:SharedVolumeRunner, '/app/src/shared_volume_runner.rb') if class_name == 'SharedVolumeRunner'
+  autoload(:SharedContainerRunner, '/app/src/shared_container_runner.rb') if class_name == 'SharedContainerRunner'
   class_name
 end
 

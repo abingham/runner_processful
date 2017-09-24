@@ -77,6 +77,8 @@ class SharedContainerRunner
   def kata_old
     assert_kata_exists
     name = container_name
+    # TODO: these two can be merged into one
+    #   docker rm --force --volume #{container_name}
     assert_exec(remove_container_cmd(name))
     assert_exec(remove_volume_cmd(name))
   end
@@ -88,7 +90,12 @@ class SharedContainerRunner
   def avatar_exists?(avatar_name)
     assert_kata_exists
     assert_valid_avatar_name(avatar_name)
-    _,_,status = quiet_exec(docker_cmd("id #{avatar_name}"))
+    # This is wrong. The avatars are now pre-created in the
+    # test-framework docker images...
+    dir = avatar_dir(avatar_name)
+    cmd = "id #{avatar_name}"
+    cmd = "[ -d #{dir} ]"
+    _stdout,_stderr,status = quiet_exec(docker_cmd(cmd))
     status == success
   end
 
@@ -119,10 +126,8 @@ class SharedContainerRunner
   def run(avatar_name, deleted_filenames, changed_files, max_seconds)
     assert_kata_exists
     assert_avatar_exists(avatar_name)
-    delete_files(container_name, avatar_name, deleted_filenames)
-    # TODO: write_files() no longer exists. It has been merged into
-    # run_cyber_dojo_sh() in docker_runner_mix_in.rb
-    write_files(container_name, avatar_name, changed_files)
+    delete_files(avatar_name, deleted_filenames)
+    write_files(avatar_name, changed_files)
     stdout,stderr,status = run_cyber_dojo_sh(avatar_name, max_seconds)
     colour = red_amber_green(container_name, stdout, stderr, status)
     { stdout:stdout, stderr:stderr, status:status, colour:colour }
@@ -209,6 +214,7 @@ class SharedContainerRunner
     assert_exec(docker_cmd(cmd))
   end
 
+  # TODO: this is better as docker_exec()
   def docker_cmd(cmd)
     "docker exec #{container_name} sh -c '#{cmd}'"
   end
