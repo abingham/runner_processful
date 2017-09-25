@@ -121,8 +121,6 @@ class Runner # processful
   def avatar_exists?(avatar_name)
     assert_kata_exists
     assert_valid_avatar_name(avatar_name)
-    # This is wrong. The avatars are now pre-created in the
-    # test-framework docker images...
     dir = avatar_dir(avatar_name)
     _stdout,_stderr,status = quiet_exec(docker_cmd("[ -d #{dir} ]"))
     status == success
