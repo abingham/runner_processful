@@ -1,6 +1,5 @@
 require_relative 'all_avatars_names'
 require_relative 'logger_null'
-require_relative 'nearest_ancestors'
 require_relative 'string_cleaner'
 require_relative 'string_truncater'
 require_relative 'valid_image_name'
@@ -25,17 +24,15 @@ require 'timeout'
 class Runner # processful
 
   def initialize(parent, image_name, kata_id)
-    @parent = parent
+    @disk = parent.disk
+    @shell = parent.shell
     @image_name = image_name
     @kata_id = kata_id
     assert_valid_image_name
     assert_valid_kata_id
   end
 
-  attr_reader :parent # For nearest_ancestors()
-
-  attr_reader :image_name
-  attr_reader :kata_id
+  attr_reader :image_name, :kata_id
 
   # - - - - - - - - - - - - - - - - - -
 
@@ -189,6 +186,8 @@ class Runner # processful
   end
 
   private
+
+  attr_reader :disk, :shell
 
   def image_names
     cmd = 'docker images --format "{{.Repository}}"'
@@ -481,16 +480,6 @@ class Runner # processful
 
   def space
     ' '
-  end
-
-  include NearestAncestors
-
-  def shell
-    @shell ||= nearest_ancestors(:shell)
-  end
-
-  def disk
-    @disk ||= nearest_ancestors(:disk)
   end
 
 end
