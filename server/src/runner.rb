@@ -124,9 +124,7 @@ class Runner # processful
     # This is wrong. The avatars are now pre-created in the
     # test-framework docker images...
     dir = avatar_dir(avatar_name)
-    cmd = "id #{avatar_name}"
-    cmd = "[ -d #{dir} ]"
-    _stdout,_stderr,status = quiet_exec(docker_cmd(cmd))
+    _stdout,_stderr,status = quiet_exec(docker_cmd("[ -d #{dir} ]"))
     status == success
   end
 
