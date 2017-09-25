@@ -12,7 +12,7 @@ class RunnerTest < TestBase
   %w( runner with invalid image_name raises ) do
     invalid_image_names.each do |invalid_image_name|
       error = assert_raises(ArgumentError) {
-        new_runner(invalid_image_name, '78307B424B')
+        Runner.new(self, invalid_image_name, '78307B424B')
       }
       assert_equal 'image_name:invalid', error.message
     end
@@ -24,7 +24,7 @@ class RunnerTest < TestBase
   %w( runner with invalid kata_id raises ) do
     invalid_kata_ids.each do |invalid_kata_id|
       error = assert_raises(ArgumentError) {
-        new_runner('cdf/gcc_assert', invalid_kata_id)
+        Runner.new(self, 'cdf/gcc_assert', invalid_kata_id)
       }
       assert_equal 'kata_id:invalid', error.message
     end
@@ -34,7 +34,7 @@ class RunnerTest < TestBase
 
   test 'D01',
   %w( runner with valid image_name and valid kata_id does not raise ) do
-    new_runner('cdf/gcc_assert', kata_id)
+    Runner.new(self, 'cdf/gcc_assert', kata_id)
   end
 
   private

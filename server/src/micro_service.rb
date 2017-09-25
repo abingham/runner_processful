@@ -71,7 +71,10 @@ class MicroService < Sinatra::Base
   # - - - - - - - - - - - - - - - -
 
   include Externals
-  include Runner
+
+  def runner
+    Runner.new(self, image_name, kata_id)
+  end
 
   def self.request_args(*names)
     names.each { |name|

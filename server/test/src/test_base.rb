@@ -96,7 +96,10 @@ class TestBase < HexMiniTest
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   include Externals
-  include Runner
+
+  def runner
+    Runner.new(self, image_name, kata_id)
+  end
 
   def sss
     @sss
