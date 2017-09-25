@@ -22,7 +22,7 @@ require 'timeout'
 #      ~30% faster than SharedVolumeRunner
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-class Runner
+class Runner # processful
 
   def initialize(parent, image_name, kata_id)
     @parent = parent
