@@ -254,11 +254,10 @@ class Runner # processful
                           '.',    # the current directory
                     "'"           # close quote
       ].join(space)
-      # Note: this tar-pipe stores file date-stamps to the second.
-      # In other words, the microseconds are always zero.
-      # This is very unlikely to matter for a real test-event from
-      # the browser but could matter in tests.
-      #run_timeout(tar_pipe, max_seconds)
+      # Note: On Alpine-Linux this tar-pipe stores file date-stamps
+      # with the microseconds set to zero. This is very unlikely to
+      # matter for a real test-event from the browser but could matter
+      # in tests.
       assert_exec(tar_pipe)
     end
   end
@@ -469,7 +468,7 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def container_name
-    'cyber_dojo_kata_container_runner_' + kata_id
+    'test_run__runner_processful_' + kata_id
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
