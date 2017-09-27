@@ -17,6 +17,15 @@ class ImagePulledTest < TestBase
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  test 'A44',
+  'true when image_name is valid and in [docker images]' do
+    mock_docker_images_prints "#{cdf}/gcc_assert"
+    @image_name = "#{cdf}/gcc_assert"
+    assert image_pulled?
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   test '9C3',
   'false when image_name is valid but not in [docker images]' do
     mock_docker_images_prints "#{cdf}/gcc_assert"
@@ -30,15 +39,6 @@ class ImagePulledTest < TestBase
     mock_docker_images_prints "#{cdf}/gcc_assert"
     @image_name = "#{cdf}/ruby_mini_test:1.9.3"
     refute image_pulled?
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  test 'A44',
-  'true when image_name is valid and in [docker images]' do
-    mock_docker_images_prints "#{cdf}/gcc_assert"
-    @image_name = "#{cdf}/gcc_assert"
-    assert image_pulled?
   end
 
   private
