@@ -109,7 +109,6 @@ class Runner # processful
 
   def kata_old
     assert_kata_exists
-    name = container_name
     assert_exec(remove_container_cmd)
   end
 
