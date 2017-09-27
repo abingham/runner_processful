@@ -18,7 +18,7 @@ require 'timeout'
 #   o) avatars can share state.
 #   o) opens the way to avatars sharing processes.
 #   o) fastest run(). In a rough sample
-#      ~30% faster than SharedVolumeRunner
+#      ~30% faster than runner_stateful
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class Runner # processful
@@ -34,6 +34,8 @@ class Runner # processful
 
   attr_reader :image_name, :kata_id
 
+  # - - - - - - - - - - - - - - - - - -
+  # image
   # - - - - - - - - - - - - - - - - - -
 
   def image_pulled?
@@ -158,6 +160,8 @@ class Runner # processful
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # properties
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def group
     'cyber-dojo'
@@ -205,8 +209,9 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
   def delete_files(avatar_name, pathed_filenames)
-    # most of the time pathed_filenames == []
+    # Most of the time pathed_filenames == []
     pathed_filenames.each do |pathed_filename|
+      # so do dir inside the block
       dir = avatar_dir(avatar_name)
       assert_docker_exec("rm #{dir}/#{pathed_filename}")
     end
@@ -217,7 +222,7 @@ class Runner # processful
   def write_files(avatar_name, files)
     return if files == {}
     Dir.mktmpdir('runner') do |tmp_dir|
-      # save the files onto the host...
+      # Save the files onto the host...
       files.each do |pathed_filename, content|
         sub_dir = File.dirname(pathed_filename)
         if sub_dir != '.'
@@ -227,7 +232,7 @@ class Runner # processful
         host_filename = tmp_dir + '/' + pathed_filename
         disk.write(host_filename, content)
       end
-      # ...then tar-pipe them into the container
+      # ...then tar-pipe them into the container.
       dir = avatar_dir(avatar_name)
       uid = user_id(avatar_name)
       tar_pipe = [
@@ -255,9 +260,9 @@ class Runner # processful
                     "'"           # close quote
       ].join(space)
       # Note: On Alpine-Linux this tar-pipe stores file date-stamps
-      # with the microseconds set to zero. This is very unlikely to
-      # matter for a real test-event from the browser but could matter
-      # in tests.
+      # to the second. Viz, the microseconds are always zero.
+      # This is very unlikely to matter for a real test-event from
+      # the browser but does matter in some tests.
       assert_exec(tar_pipe)
     end
   end
@@ -306,7 +311,7 @@ class Runner # processful
       # cyber-dojo.sh process running __inside__
       # the docker container. See
       # https://github.com/docker/docker/issues/9098
-      # The container is killed by remove_container().
+      # The container is killed by kata_old()
       Process.kill(-9, pid)
       Process.detach(pid)
       ['', '', timed_out]
