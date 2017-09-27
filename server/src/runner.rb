@@ -192,15 +192,6 @@ class Runner # processful
 
   attr_reader :disk, :shell
 
-  def image_names
-    cmd = 'docker images --format "{{.Repository}}"'
-    stdout,_ = assert_exec(cmd)
-    names = stdout.split("\n")
-    names.uniq - ['<none>']
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - -
-
   def remove_container_cmd
     "docker rm --force --volumes #{container_name}"
   end
@@ -329,6 +320,23 @@ class Runner # processful
     out,_err = assert_exec("docker exec #{cid} sh -c '#{cmd}'")
     rag = eval(out)
     rag.call(stdout_arg, stderr_arg, status_arg).to_s
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # images
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def image_names
+    cmd = 'docker images --format "{{.Repository}}"'
+    stdout,_ = assert_exec(cmd)
+    names = stdout.split("\n")
+    names.uniq - ['<none>']
+  end
+
+  def container_name
+    # Give containers a name with a specific prefix so they
+    # can be cleaned up if any fail to be removed/reaped.
+    'test_run__runner_processful_' + kata_id
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -467,12 +475,6 @@ class Runner # processful
 
   def quiet_exec(cmd)
     shell.exec(cmd, LoggerNull.new(self))
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def container_name
-    'test_run__runner_processful_' + kata_id
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
