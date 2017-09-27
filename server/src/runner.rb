@@ -47,7 +47,7 @@ class Runner # processful
   def image_pull
     # [1] The contents of stderr vary depending on Docker version
     _stdout,stderr,status = quiet_exec("docker pull #{image_name}")
-    if status == shell.success
+    if status == success
       return true
     elsif stderr.include?('not found') || stderr.include?('not exist')
       return false # [1]
