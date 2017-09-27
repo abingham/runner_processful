@@ -87,9 +87,9 @@ class Runner # processful
       '--net=none',                        # security
       '--pids-limit=128',                  # no fork bombs
       '--security-opt=no-new-privileges',  # no escalation
-      '--ulimit nproc=128:128',            # max number processes = 128
       '--ulimit core=0:0',                 # max core file size = 0 blocks
       '--ulimit nofile=128:128',           # max number of files = 128
+      '--ulimit nproc=128:128',            # max number processes = 128
       '--user=root',
       "--volume #{name}:#{sandboxes_root_dir}:rw"
     ].join(space)
