@@ -8,13 +8,11 @@ class ImagePullTest < TestBase
   end
 
   def hex_setup
-    @shell ||= ShellMocker.new(nil)
+    @shell = ShellMocker.new(nil)
   end
 
   def hex_teardown
-    if shell.respond_to? :teardown
-      shell.teardown
-    end
+    shell.teardown
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
