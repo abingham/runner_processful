@@ -31,9 +31,9 @@ class ForkBombTest < TestBase
     }
     assert status == success || status == 2
     lines = stdout.split("\n")
-    assert lines.count{ |line| line == 'All tests passed' } > 24
-    assert lines.count{ |line| line == 'fork() => 0' } > 42
-    assert lines.count{ |line| line == 'fork() => -1' } > 42
+    assert lines.count{ |line| line == 'All tests passed' } > 24, stdout
+    assert lines.count{ |line| line == 'fork() => 0' } > 42, stdout
+    assert lines.count{ |line| line == 'fork() => -1' } > 42, stdout
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -48,9 +48,9 @@ class ForkBombTest < TestBase
     }
     assert status == success || status == 2
     lines = stdout.split("\n")
-    assert lines.count{ |line| line.include? 'All tests passed' } > 24
-    assert lines.count{ |line| line == 'fork() => 0' } > 42
-    assert lines.count{ |line| line == 'fork() => -1' } > 42
+    assert lines.count{ |line| line.include? 'All tests passed' } > 24, stdout
+    assert lines.count{ |line| line == 'fork() => 0' } > 42, stdout
+    assert lines.count{ |line| line == 'fork() => -1' } > 42, stdout
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
