@@ -25,7 +25,7 @@ class TimeoutTest < TestBase
       then
         the output is empty
           and
-        the status is timed_out
+        the colour is timed_out
   ) do
     gcc_assert_files['hiker.c'] = [
       '#include "hiker.h"',
@@ -39,9 +39,7 @@ class TimeoutTest < TestBase
       changed_files:gcc_assert_files,
         max_seconds:2
     }
-    stdout,stderr = assert_run_times_out(named_args)
-    assert_equal '', stdout
-    assert_equal '', stderr
+    assert_run_times_out(named_args)
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -55,7 +53,7 @@ class TimeoutTest < TestBase
       then
         the output is nonetheless empty
           and
-        the status is timed_out
+        the colour is timed_out
     ) do
     gcc_assert_files['hiker.c'] = [
       '#include "hiker.h"',
@@ -71,9 +69,7 @@ class TimeoutTest < TestBase
       changed_files:gcc_assert_files,
         max_seconds:2
     }
-    stdout,stderr = assert_run_times_out(named_args)
-    assert_equal '', stdout
-    assert_equal '', stderr
+    assert_run_times_out(named_args)
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -

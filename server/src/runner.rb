@@ -153,8 +153,7 @@ class Runner # processful
     assert_avatar_exists(avatar_name)
     delete_files(avatar_name, deleted_filenames)
     write_files(avatar_name, changed_files)
-    stdout,stderr,status = run_cyber_dojo_sh(avatar_name, max_seconds)
-    colour = red_amber_green(container_name, stdout, stderr, status)
+    stdout,stderr,status,colour = run_cyber_dojo_sh(avatar_name, max_seconds)
     { stdout:stdout, stderr:stderr, status:status, colour:colour }
   end
 
@@ -293,7 +292,8 @@ class Runner # processful
         w_stderr.close
         stdout = truncated(cleaned(r_stdout.read))
         stderr = truncated(cleaned(r_stderr.read))
-        [stdout, stderr, status]
+        colour = red_amber_green(container_name, stdout, stderr, status)
+        [stdout, stderr, status, colour]
       end
     rescue Timeout::Error
       # Kill the [docker exec] processes running
@@ -304,7 +304,7 @@ class Runner # processful
       # The container is killed by kata_old()
       Process.kill(-9, pid)
       Process.detach(pid)
-      ['', '', timed_out]
+      ['', '', 137, timed_out]
     ensure
       w_stdout.close unless w_stdout.closed?
       w_stderr.close unless w_stderr.closed?

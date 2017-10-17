@@ -60,15 +60,15 @@ class TestBase < HexMiniTest
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def sss_run(named_args = {})
+  def run4(named_args = {})
     # don't name this run() as it clashes with MiniTest
     args = []
     args << defaulted_arg(named_args, :avatar_name, default_avatar_name)
     args << defaulted_arg(named_args, :deleted_filenames, [])
     args << defaulted_arg(named_args, :changed_files, files)
     args << defaulted_arg(named_args, :max_seconds, 10)
-    @sss = runner.run(*args)
-    [stdout,stderr,status,colour]
+    @quad = runner.run(*args)
+    nil
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -101,48 +101,48 @@ class TestBase < HexMiniTest
     Runner.new(self, image_name, kata_id)
   end
 
-  def sss
-    @sss
-  end
-
   def stdout
-    sss[:stdout]
+    quad[:stdout]
   end
 
   def stderr
-    sss[:stderr]
+    quad[:stderr]
   end
 
   def status
-    sss[:status]
+    quad[:status]
   end
 
   def colour
-    sss[:colour]
+    quad[:colour]
   end
 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   def assert_stdout(expected)
-    assert_equal expected, stdout, sss
+    assert_equal expected, stdout, quad
   end
 
   def assert_stderr(expected)
-    assert_equal expected, stderr, sss
+    assert_equal expected, stderr, quad
   end
 
   def assert_status(expected)
-    assert_equal expected, status, sss
+    assert_equal expected, status, quad
   end
 
   def assert_colour(expected)
-    assert_equal expected, colour, sss
+    assert_equal expected, colour, quad
   end
 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   def assert_stdout_include(text)
-    assert stdout.include?(text), sss
+    assert stdout.include?(text), quad
   end
 
   def assert_stderr_include(text)
-    assert stderr.include?(text), sss
+    assert stderr.include?(text), quad
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -153,16 +153,19 @@ class TestBase < HexMiniTest
   end
 
   def assert_run_succeeds(named_args)
-    stdout,stderr,status = sss_run(named_args)
-    assert_equal success, status, [stdout,stderr]
-    assert_equal '', stderr, stdout
+    run4(named_args)
+    refute_equal timed_out, colour, quad
+    assert_status success
+    assert_stderr ''
     stdout
   end
 
   def assert_run_times_out(named_args)
-    stdout,stderr,status = sss_run(named_args)
-    assert_equal timed_out, status, [stdout,stderr]
-    [stdout,stderr]
+    run4(named_args)
+    assert_colour timed_out
+    assert_status 137
+    assert_stdout ''
+    assert_stderr ''
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -331,6 +334,12 @@ class TestBase < HexMiniTest
     yield
   ensure
     avatar_old(name)
+  end
+
+  private
+
+  def quad
+    @quad
   end
 
 end

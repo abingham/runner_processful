@@ -2,9 +2,19 @@ require_relative 'test_base'
 
 class RunTest < TestBase
 
-  def self.hex_prefix; '201BCEF'; end
-  def hex_setup; kata_new; avatar_new; end
-  def hex_teardown; avatar_old; kata_old; end
+  def self.hex_prefix
+    '201BCEF'
+  end
+
+  def hex_setup
+    kata_new
+    avatar_new
+  end
+
+  def hex_teardown
+    avatar_old
+    kata_old
+  end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # negative test cases
@@ -12,7 +22,7 @@ class RunTest < TestBase
 
   test 'D5F',
   'run with invalid image_name raises' do
-    error = assert_raises { sss_run({ image_name:Object.new }) }
+    error = assert_raises { run4({ image_name:Object.new }) }
     assert_equal 'RunnerService:run:image_name:invalid', error.message
   end
 
@@ -20,7 +30,7 @@ class RunTest < TestBase
 
   test '42D',
   'run with invalid kata_id raises' do
-    error = assert_raises { sss_run({ kata_id:Object.new }) }
+    error = assert_raises { run4({ kata_id:Object.new }) }
     assert_equal 'RunnerService:run:kata_id:invalid', error.message
   end
 
@@ -28,7 +38,7 @@ class RunTest < TestBase
 
   test '3BA',
   'run with invalid avatar_name raises avatar_name' do
-    error = assert_raises { sss_run({ avatar_name:'rod_father' }) }
+    error = assert_raises { run4({ avatar_name:'rod_father' }) }
     assert_equal 'RunnerService:run:avatar_name:invalid', error.message
   end
 
@@ -38,13 +48,13 @@ class RunTest < TestBase
 
   test '348',
   'red-traffic-light' do
-    sss_run
+    run4
     assert_colour 'red'
     lines = [
       'Assertion failed: answer() == 42',
       "make: *** [makefile:14: test.output] Aborted"
     ]
-    lines.each { |line| assert stderr.include?(line), sss.to_s }
+    lines.each { |line| assert_stderr_include(line) }
     assert_status 2
   end
 
@@ -53,7 +63,7 @@ class RunTest < TestBase
   test '16F',
   'green-traffic-light' do
     file_sub('hiker.c', '6 * 9', '6 * 7')
-    sss_run
+    run4
     assert_colour 'green'
     assert_stdout "All tests passed\n"
     assert_stderr ''
@@ -65,13 +75,13 @@ class RunTest < TestBase
   test '295',
   'amber-traffic-light' do
     file_sub('hiker.c', '6 * 9', '6 * 9sss')
-    sss_run
+    run4
     assert_colour 'amber'
     lines = [
       "invalid suffix \"sss\" on integer constant",
       'return 6 * 9sss'
     ]
-    lines.each { |line| assert stderr.include?(line), sss.to_s }
+    lines.each { |line| assert_stderr_include(line) }
     assert_status 2
   end
 
@@ -79,7 +89,7 @@ class RunTest < TestBase
 
   test '722',
   'code with extra 500K file is red' do
-    sss_run({
+    run4({
       changed_files:{ 'large.txt' => 'X'*1023*500 },
       image_name:"#{cdf}/gcc_assert"
     })
@@ -91,10 +101,11 @@ class RunTest < TestBase
   test 'E6F',
   'timed-out-traffic-light' do
     file_sub('hiker.c', 'return', "for(;;);\nreturn")
-    sss_run({ max_seconds:3 })
+    run4({ max_seconds:3 })
     assert_stdout ''
     assert_stderr ''
-    assert_timed_out
+    assert_status 137
+    assert_colour timed_out
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -109,14 +120,15 @@ class RunTest < TestBase
       "fold -w #{five_K_plus_1}",
       'head -n 1'
     ].join('|')
-    sss_run({
+    run4({
       changed_files: {
         'cyber-dojo.sh': "seq 2 | xargs -I{} sh -c '#{command}'"
       }
     })
-    assert stdout.end_with? 'output truncated by cyber-dojo', sss.to_s
+    assert_stdout_include 'output truncated by cyber-dojo'
     assert_stderr ''
     assert_status 0
+    assert_colour 'amber'
   end
 
 end
