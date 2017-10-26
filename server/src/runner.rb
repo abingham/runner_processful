@@ -80,9 +80,9 @@ class Runner # processful
     # volume may not have been collected yet.
     quiet_exec(remove_container_cmd)
     name = container_name
-    mb4 = 4 * 1024 * 1024
+    mb8 = 8 * 1024 * 1024
     mb16 = 16 * 1024 * 1024
-    gb4 = mb4 * 1024
+    gb4 = 4 * 1024 * 1024 * 1024
     args = [
       '--detach',
       '--interactive',                     # later execs
@@ -97,6 +97,7 @@ class Runner # processful
       '--ulimit locks=128:128',            # max number of file locks
       '--ulimit nofile=128:128',           # max number of files
       '--ulimit nproc=128:128',            # max number processes
+      "--ulimit stack=#{mb8}:#{mb8}",      # max stack size
       '--user=root',
       "--volume #{name}:#{sandboxes_root_dir}:rw"
     ].join(space)

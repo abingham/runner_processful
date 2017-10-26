@@ -217,6 +217,9 @@ module OsHelper
 
     expected_file_size = 16 * mb / (block_size = 512)
     assert_equal expected_file_size,  ulimit(lines, :file_size,  etc_issue)
+
+    expected_stack_size = 8 * mb / kb
+    assert_equal expected_stack_size, ulimit(lines, :stack_size, etc_issue)
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -230,6 +233,7 @@ module OsHelper
       :file_size  => [ '-f: file size (blocks)',      'file(blocks)'    ],
       :no_files   => [ '-n: file descriptors',        'nofiles'         ],
       :processes  => [ '-p: processes',               'process'         ],
+      :stack_size => [ '-s: stack size (kb)',         'stack(kbytes)'   ],
     }
     row = table[key]
     refute_nil row, "no ulimit table entry for #{key}"
