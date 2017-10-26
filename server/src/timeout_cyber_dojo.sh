@@ -1,9 +1,9 @@
 #!/usr/bin/env sh
 # Note: Alpine images do not have bash
 
-KATA_ID=$1
-AVATAR=$2
-MAX_SECONDS=$3
+readonly KATA_ID=$1
+readonly AVATAR=$2
+readonly MAX_SECONDS=$3
 
 export CYBER_DOJO_AVATAR_NAME=${AVATAR}
 export CYBER_DOJO_KATA_ID=${KATA_ID}
@@ -15,7 +15,7 @@ cd ${CYBER_DOJO_SANDBOX}
 
 grep -q -c Alpine /etc/issue >/dev/null 2>&1
 if [ $? -eq 0 ]; then
-  # On Alpine's ps, the user's name is truncated to 8 chars
+  # On Alpine's ps, the avatar-user's name is truncated to 8 chars
   PS_AVATAR=`echo ${AVATAR} | cut -c -8`
   su ${AVATAR} -p -c "timeout -s KILL -t ${MAX_SECONDS} sh ./cyber-dojo.sh"
   status=$?
