@@ -88,6 +88,8 @@ class Runner # processful
       '--pids-limit=128',                  # no fork bombs
       '--security-opt=no-new-privileges',  # no escalation
       '--ulimit core=0:0',                 # max core file size
+      '--ulimit cpu=10:10',                # max cpu time (seconds)
+      '--ulimit locks=128:128',            # max number of file locks
       '--ulimit nofile=128:128',           # max number of files
       '--ulimit nproc=128:128',            # max number processes
       '--user=root',

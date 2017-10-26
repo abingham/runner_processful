@@ -202,23 +202,34 @@ module OsHelper
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def ulimit_test
+    #processful
+    etc_issue = assert_cyber_dojo_sh('cat /etc/issue')
     lines = assert_cyber_dojo_sh('ulimit -a').split("\n")
-    max = 128
-    assert_equal max, ulimit(lines, :max_processes)
-    assert_equal   0, ulimit(lines, :max_core_size)
-    assert_equal max, ulimit(lines, :max_no_files)
+    assert_equal   0, ulimit(lines, :max_core_size, etc_issue)
+    assert_equal  10, ulimit(lines, :cpu_time,      etc_issue)
+    assert_equal 128, ulimit(lines, :file_locks,    etc_issue)
+    assert_equal 128, ulimit(lines, :max_no_files,  etc_issue)
+    assert_equal 128, ulimit(lines, :max_processes, etc_issue)
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def ulimit(lines, key)
+  def ulimit(lines, key, etc_issue)
     table = {             # alpine,                       ubuntu
-      :max_processes => [ '-p: processes',               'process'         ],
       :max_core_size => [ '-c: core file size (blocks)', 'coredump(blocks)'],
+      :cpu_time      => [ '-t: cpu time (seconds)',      'time(seconds)'   ],
+      :file_locks    => [ '-w: locks',                   'locks'           ],
       :max_no_files  => [ '-n: file descriptors',        'nofiles'         ],
+      :max_processes => [ '-p: processes',               'process'         ],
     }
-    if alpine?; txt = table[key][0]; end
-    if ubuntu?; txt = table[key][1]; end
+    row = table[key]
+    refute_nil row, "no ulimit table entry for #{key}"
+    if alpine?(etc_issue)
+      txt = row[0]
+    end
+    if ubuntu?(etc_issue)
+      txt = row[1]
+    end
     line = lines.detect { |limit| limit.start_with? txt }
     line.split[-1].to_i
   end
@@ -236,18 +247,12 @@ module OsHelper
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def alpine?
+  def alpine?(etc_issue)
     etc_issue.include? 'Alpine'
   end
 
-  def ubuntu?
+  def ubuntu?(etc_issue)
     etc_issue.include? 'Ubuntu'
-  end
-
-  def etc_issue
-    changed_files = { 'cyber-dojo.sh' => 'cat /etc/issue' }
-    run4({ changed_files:changed_files })
-    stdout
   end
 
 end
