@@ -81,6 +81,7 @@ class Runner # processful
     quiet_exec(remove_container_cmd)
     name = container_name
     mb4 = 4 * 1024 * 1024
+    mb16 = 16 * 1024 * 1024
     gb4 = mb4 * 1024
     args = [
       '--detach',
@@ -92,6 +93,7 @@ class Runner # processful
       "--ulimit data=#{gb4}:#{gb4}",       # max data segment size
       '--ulimit core=0:0',                 # max core file size
       '--ulimit cpu=10:10',                # max cpu time (seconds)
+      "--ulimit fsize=#{mb16}:#{mb16}",    # max file size
       '--ulimit locks=128:128',            # max number of file locks
       '--ulimit nofile=128:128',           # max number of files
       '--ulimit nproc=128:128',            # max number processes

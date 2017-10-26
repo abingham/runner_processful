@@ -215,6 +215,8 @@ module OsHelper
     expected_data_size = 4 * gb / kb
     assert_equal expected_data_size,  ulimit(lines, :data_size,  etc_issue)
 
+    expected_file_size = 16 * mb / (block_size = 512)
+    assert_equal expected_file_size,  ulimit(lines, :file_size,  etc_issue)
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -225,6 +227,7 @@ module OsHelper
       :cpu_time   => [ '-t: cpu time (seconds)',      'time(seconds)'   ],
       :data_size  => [ '-d: data seg size (kb)',      'data(kbytes)'    ],
       :file_locks => [ '-w: locks',                   'locks'           ],
+      :file_size  => [ '-f: file size (blocks)',      'file(blocks)'    ],
       :no_files   => [ '-n: file descriptors',        'nofiles'         ],
       :processes  => [ '-p: processes',               'process'         ],
     }
