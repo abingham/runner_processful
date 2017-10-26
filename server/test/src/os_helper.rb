@@ -205,22 +205,28 @@ module OsHelper
     #processful
     etc_issue = assert_cyber_dojo_sh('cat /etc/issue')
     lines = assert_cyber_dojo_sh('ulimit -a').split("\n")
-    assert_equal   0, ulimit(lines, :max_core_size, etc_issue)
-    assert_equal  10, ulimit(lines, :cpu_time,      etc_issue)
-    assert_equal 128, ulimit(lines, :file_locks,    etc_issue)
-    assert_equal 128, ulimit(lines, :max_no_files,  etc_issue)
-    assert_equal 128, ulimit(lines, :max_processes, etc_issue)
+
+    assert_equal   0, ulimit(lines, :core_size,  etc_issue)
+    assert_equal  10, ulimit(lines, :cpu_time,   etc_issue)
+    assert_equal 128, ulimit(lines, :file_locks, etc_issue)
+    assert_equal 128, ulimit(lines, :no_files,   etc_issue)
+    assert_equal 128, ulimit(lines, :processes,  etc_issue)
+
+    expected_data_size = 4 * gb / kb
+    assert_equal expected_data_size,  ulimit(lines, :data_size,  etc_issue)
+
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def ulimit(lines, key, etc_issue)
     table = {             # alpine,                       ubuntu
-      :max_core_size => [ '-c: core file size (blocks)', 'coredump(blocks)'],
-      :cpu_time      => [ '-t: cpu time (seconds)',      'time(seconds)'   ],
-      :file_locks    => [ '-w: locks',                   'locks'           ],
-      :max_no_files  => [ '-n: file descriptors',        'nofiles'         ],
-      :max_processes => [ '-p: processes',               'process'         ],
+      :core_size  => [ '-c: core file size (blocks)', 'coredump(blocks)'],
+      :cpu_time   => [ '-t: cpu time (seconds)',      'time(seconds)'   ],
+      :data_size  => [ '-d: data seg size (kb)',      'data(kbytes)'    ],
+      :file_locks => [ '-w: locks',                   'locks'           ],
+      :no_files   => [ '-n: file descriptors',        'nofiles'         ],
+      :processes  => [ '-p: processes',               'process'         ],
     }
     row = table[key]
     refute_nil row, "no ulimit table entry for #{key}"
@@ -253,6 +259,20 @@ module OsHelper
 
   def ubuntu?(etc_issue)
     etc_issue.include? 'Ubuntu'
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def kb
+    1024
+  end
+
+  def mb
+    kb * 1024
+  end
+
+  def gb
+    mb * 1024
   end
 
 end

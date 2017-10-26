@@ -80,6 +80,8 @@ class Runner # processful
     # volume may not have been collected yet.
     quiet_exec(remove_container_cmd)
     name = container_name
+    mb4 = 4 * 1024 * 1024
+    gb4 = mb4 * 1024
     args = [
       '--detach',
       '--interactive',                     # later execs
@@ -87,6 +89,7 @@ class Runner # processful
       '--net=none',                        # security
       '--pids-limit=128',                  # no fork bombs
       '--security-opt=no-new-privileges',  # no escalation
+      "--ulimit data=#{gb4}:#{gb4}",       # max data segment size
       '--ulimit core=0:0',                 # max core file size
       '--ulimit cpu=10:10',                # max cpu time (seconds)
       '--ulimit locks=128:128',            # max number of file locks
