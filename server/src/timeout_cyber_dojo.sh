@@ -5,8 +5,9 @@ KATA_ID=$1
 AVATAR=$2
 MAX_SECONDS=$3
 
-export CYBER_DOJO_KATA_ID=${KATA_ID}
 export CYBER_DOJO_AVATAR_NAME=${AVATAR}
+export CYBER_DOJO_KATA_ID=${KATA_ID}
+export CYBER_DOJO_RUNNER=processful
 export CYBER_DOJO_SANDBOX=/sandboxes/${AVATAR}
 export HOME=/home/${AVATAR}
 
