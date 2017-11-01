@@ -101,7 +101,14 @@ class Runner # processful
       '--user=root',
       "--volume #{name}:#{sandboxes_root_dir}:rw"
     ].join(space)
-    cmd = "docker run #{args} #{image_name} sh -c 'sleep 3h'"
+
+    init_filename = '/usr/local/bin/cyber-dojo-init.sh'
+    cmd = [
+      "docker run #{args}",
+      image_name,
+      "sh -c '([ -f #{init_filename}] && #{init_filename}); sleep 3h'"
+    ].join(space)
+
     assert_exec(cmd)
 
     my_dir = File.expand_path(File.dirname(__FILE__))
