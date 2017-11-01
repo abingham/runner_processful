@@ -15,3 +15,4 @@ script:
 
     #
     - ./pipe_build_up_test.sh
+        && travis_wait ./push_and_trigger.sh cyber-dojo/web
