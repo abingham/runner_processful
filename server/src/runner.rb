@@ -85,6 +85,7 @@ class Runner # processful
     gb4 = 4 * 1024 * 1024 * 1024
     args = [
       '--detach',
+      '--init',                            # pid-1 process
       '--interactive',                     # later execs
       "--name=#{name}",
       '--net=none',                        # security
