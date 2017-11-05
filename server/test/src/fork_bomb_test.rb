@@ -29,7 +29,8 @@ class ForkBombTest < TestBase
               changed_files: {'hiker.c' => hiker_c }
       })
     }
-    assert status == success || status == 2
+    assert_colour 'green'
+    assert_stderr ''
     lines = stdout.split("\n")
     assert lines.count{ |line| line == 'All tests passed' } > 24, stdout
     assert lines.count{ |line| line == 'fork() => 0' } > 42, stdout
@@ -46,7 +47,6 @@ class ForkBombTest < TestBase
               changed_files: { 'hiker.cpp' => hiker_cpp }
       })
     }
-    assert [ success, 2, 137 ].include?(status), status
     lines = stdout.split("\n")
     assert lines.count{ |line| line.include? 'All tests passed' } > 24, stdout
     assert lines.count{ |line| line == 'fork() => 0' } > 42, stdout
