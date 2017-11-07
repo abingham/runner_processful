@@ -168,7 +168,7 @@ class Runner # processful
     assert_avatar_exists(avatar_name)
     delete_files(avatar_name, deleted_filenames)
     write_files(avatar_name, changed_files)
-    stdout,stderr,status,colour = run_cyber_dojo_sh(avatar_name, max_seconds)
+    stdout,stderr,status,colour = run_timeout_cyber_dojo_sh(avatar_name, max_seconds)
     { stdout:stdout, stderr:stderr, status:status, colour:colour }
   end
 
@@ -273,7 +273,7 @@ class Runner # processful
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def run_cyber_dojo_sh(avatar_name, max_seconds)
+  def run_timeout_cyber_dojo_sh(avatar_name, max_seconds)
     # The processes __inside__ the docker container
     # are killed by /usr/local/bin/timeout_cyber_dojo.sh
     # See kata_new() above.
