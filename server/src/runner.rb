@@ -163,6 +163,18 @@ class Runner # processful
   # run
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+=begin
+  def run_cyber_dojo_sh(
+    avatar_name,
+    deleted_filenames,
+    unchanged_files, changed_files, new_files,
+    max_seconds
+  )
+    all_files = [*unchanged_files, *changed_files, *new_files].to_h
+    run(avatar_name, deleted_filenames, all_files, max_seconds)
+  end
+=end
+
   def run(avatar_name, deleted_filenames, changed_files, max_seconds)
     assert_kata_exists
     assert_avatar_exists(avatar_name)

@@ -30,7 +30,7 @@ class ForkBombTest < TestBase
       })
     }
     assert_colour 'green'
-    assert_stderr ''
+    assert_stderr "/usr/local/bin/timeout_cyber_dojo.sh: line 29: can't fork\n"
     lines = stdout.split("\n")
     assert lines.count{ |line| line == 'All tests passed' } > 24, stdout
     assert lines.count{ |line| line == 'fork() => 0' } > 42, stdout
@@ -86,7 +86,7 @@ class ForkBombTest < TestBase
     @log = LoggerSpy.new(nil)
     as('lion') {
       begin
-        run4_shell_fork_bomb
+        run_shell_fork_bomb
       # :nocov:
         assert_status success
         assert_stdout ''
@@ -113,7 +113,7 @@ class ForkBombTest < TestBase
     @log = LoggerSpy.new(nil)
     as('lion') {
       begin
-        run4_shell_fork_bomb
+        run_shell_fork_bomb
       # :nocov:
         assert [success,2].include?(status)
         assert_stdout ''
@@ -132,11 +132,11 @@ class ForkBombTest < TestBase
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def run4_shell_fork_bomb
-    cyber_dojo_sh = 'bomb() { bomb | bomb & }; bomb'
+  def run_shell_fork_bomb
+    shell_fork_bomb = 'bomb() { bomb | bomb & }; bomb'
     run4({
-        avatar_name:'lion',
-      changed_files:{'cyber-dojo.sh' => cyber_dojo_sh }
+        avatar_name: 'lion',
+      changed_files: {'cyber-dojo.sh' => shell_fork_bomb }
     })
   end
 
