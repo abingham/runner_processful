@@ -269,16 +269,13 @@ class Runner # processful
                     "'",          # open quote
                     "cd #{dir}",
                     '&& tar',
+                          '--touch',
                           '-zxf', # extract from a compressed tar file
                           '-',    # which is read from stdin
                           '-C',   # save the extracted files to
                           '.',    # the current directory
                     "'"           # close quote
       ].join(space)
-      # Note: On Alpine-Linux this tar-pipe stores file date-stamps
-      # to the second. Viz, the microseconds are always zero.
-      # This is very unlikely to matter for a real test-event from
-      # the browser but does matter in some tests.
       assert_exec(tar_pipe)
     end
   end
