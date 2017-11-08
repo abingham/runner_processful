@@ -39,6 +39,7 @@ class ForkBombTest < TestBase
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+=begin
   test 'CD6',
   %w( [Ubuntu] fork-bomb in C++ fails to go off ) do
     hiker_cpp = '#include "hiker.hpp"' + "\n" + fork_bomb_definition
@@ -52,6 +53,7 @@ class ForkBombTest < TestBase
     assert lines.count{ |line| line == 'fork() => 0' } > 42, stdout
     assert lines.count{ |line| line == 'fork() => -1' } > 42, stdout
   end
+=end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
