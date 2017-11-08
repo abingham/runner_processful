@@ -87,6 +87,7 @@ class Runner # processful
       '--detach',
       '--init',                            # pid-1 process
       '--interactive',                     # later execs
+      '--memory=384m',
       "--name=#{name}",
       '--net=none',                        # security
       '--pids-limit=128',                  # no fork bombs
