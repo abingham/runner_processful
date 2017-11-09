@@ -22,38 +22,28 @@ class ForkBombTest < TestBase
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   test 'CD5',
-  %w( [Alpine] fork-bomb in C fails to go off ) do
-    hiker_c = '#include "hiker.h"' + "\n" + fork_bomb_definition
+  %w( [Alpine] fork-bomb does not run indefinitely ) do
+    content = '#include "hiker.h"' + "\n" + fork_bomb_definition
     as('lion') {
       run4({ avatar_name: 'lion',
-              changed_files: {'hiker.c' => hiker_c }
+           changed_files: {'hiker.c' => content },
+             max_seconds: 5
       })
     }
-    assert_colour 'green'
-    assert_stderr "/usr/local/bin/timeout_cyber_dojo.sh: line 29: can't fork\n"
-    lines = stdout.split("\n")
-    assert lines.count{ |line| line == 'All tests passed' } > 24, stdout
-    assert lines.count{ |line| line == 'fork() => 0' } > 42, stdout
-    assert lines.count{ |line| line == 'fork() => -1' } > 42, stdout
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-=begin
   test 'CD6',
-  %w( [Ubuntu] fork-bomb in C++ fails to go off ) do
-    hiker_cpp = '#include "hiker.hpp"' + "\n" + fork_bomb_definition
+  %w( [Ubuntu] fork-bomb does not run indefinitely ) do
+    content = '#include "hiker.hpp"' + "\n" + fork_bomb_definition
     as('lion') {
       run4({ avatar_name: 'lion',
-              changed_files: { 'hiker.cpp' => hiker_cpp }
+           changed_files: { 'hiker.cpp' => content },
+             max_seconds: 5
       })
     }
-    lines = stdout.split("\n")
-    assert lines.count{ |line| line.include? 'All tests passed' } > 24, stdout
-    assert lines.count{ |line| line == 'fork() => 0' } > 42, stdout
-    assert lines.count{ |line| line == 'fork() => -1' } > 42, stdout
   end
-=end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -81,26 +71,12 @@ class ForkBombTest < TestBase
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   test '4DE',
-  %w( [Alpine] fork-bomb in shell fails to go off ) do
-    # A shell fork-bomb fails in a non-deterministic way.
-    # Sometimes, it throws an ArgumentError exception.
-    # The nocov markers keep coverage at 100%
+  %w( [Alpine] fork-bomb does not run indefinitely ) do
     @log = LoggerSpy.new(nil)
     as('lion') {
       begin
         run_shell_fork_bomb
-      # :nocov:
-        assert_status success
-        assert_stdout ''
-        assert_stderr_include "./cyber-dojo.sh: line 1: can't fork"
       rescue ArgumentError
-        rag_filename = '/usr/local/bin/red_amber_green.rb'
-        cmd = "'cat #{rag_filename}'"
-        assert /COMMAND:docker .* sh -c #{cmd}/.match @log.spied[1]
-        assert_equal 'STATUS:2',                      @log.spied[2]
-        assert_equal 'STDOUT:',                       @log.spied[3]
-        assert_equal "STDERR:sh: can't fork\n",       @log.spied[4]
-      # :nocov:
       end
     }
   end
@@ -108,26 +84,12 @@ class ForkBombTest < TestBase
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   test '4DF',
-  %w( [Ubuntu] fork-bomb in shell fails to go off ) do
-    # A shell fork-bomb fails in a non-deterministic way.
-    # Sometimes, it throws an ArgumentError exception.
-    # The nocov markers keep coverage at 100%
+  %w( [Ubuntu] fork-bomb does not run indefinitely ) do
     @log = LoggerSpy.new(nil)
     as('lion') {
       begin
         run_shell_fork_bomb
-      # :nocov:
-        assert [success,2].include?(status)
-        assert_stdout ''
-        assert_stderr_include "./cyber-dojo.sh: Cannot fork"
       rescue ArgumentError
-        rag_filename = '/usr/local/bin/red_amber_green.rb'
-        cmd = "'cat #{rag_filename}'"
-        assert /COMMAND:docker .* sh -c #{cmd}/.match @log.spied[1]
-        assert_equal 'STATUS:2',                      @log.spied[2]
-        assert_equal 'STDOUT:',                       @log.spied[3]
-        assert_equal "STDERR:sh: 1: Cannot fork\n",   @log.spied[4]
-      # :nocov:
       end
     }
   end
@@ -138,7 +100,8 @@ class ForkBombTest < TestBase
     shell_fork_bomb = 'bomb() { bomb | bomb & }; bomb'
     run4({
         avatar_name: 'lion',
-      changed_files: {'cyber-dojo.sh' => shell_fork_bomb }
+      changed_files: {'cyber-dojo.sh' => shell_fork_bomb },
+        max_seconds: 5
     })
   end
 
