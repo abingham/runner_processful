@@ -80,9 +80,6 @@ class Runner # processful
     # volume may not have been collected yet.
     quiet_exec(remove_container_cmd)
     name = container_name
-    mb8 = 8 * 1024 * 1024
-    mb16 = 16 * 1024 * 1024
-    gb4 = 4 * 1024 * 1024 * 1024
     args = [
       '--detach',
       '--init',                            # pid-1 process
@@ -92,13 +89,13 @@ class Runner # processful
       '--net=none',                        # security
       '--pids-limit=128',                  # no fork bombs
       '--security-opt=no-new-privileges',  # no escalation
-      "--ulimit data=#{gb4}:#{gb4}",       # max data segment size
+      "--ulimit data=#{4*GB}:#{4*GB}",     # max data segment size
       '--ulimit core=0:0',                 # max core file size
-      "--ulimit fsize=#{mb16}:#{mb16}",    # max file size
+      "--ulimit fsize=#{16*MB}:#{16*MB}",  # max file size
       '--ulimit locks=128:128',            # max number of file locks
       '--ulimit nofile=128:128',           # max number of files
       '--ulimit nproc=128:128',            # max number processes
-      "--ulimit stack=#{mb8}:#{mb8}",      # max stack size
+      "--ulimit stack=#{8*MB}:#{8*MB}",    # max stack size
       '--user=root',
       "--volume #{name}:#{sandboxes_root_dir}:rw"
     ].join(space)
@@ -120,6 +117,10 @@ class Runner # processful
     ].join(space)
     assert_exec(docker_cp)
   end
+
+  KB = 1024
+  MB = 1024 * KB
+  GB = 1024 * MB
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
