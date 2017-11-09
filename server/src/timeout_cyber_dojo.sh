@@ -1,12 +1,14 @@
 #!/usr/bin/env sh
 # Note: Alpine images may not have bash
 
-readonly KATA_ID=$1
-readonly AVATAR=$2
-readonly MAX_SECONDS=$3
+readonly IMAGE_NAME=$1
+readonly KATA_ID=$2
+readonly AVATAR=$3
+readonly MAX_SECONDS=$4
 
-export CYBER_DOJO_AVATAR_NAME=${AVATAR}
+export CYBER_DOJO_IMAGE_NAME=${IMAGE_NAME}
 export CYBER_DOJO_KATA_ID=${KATA_ID}
+export CYBER_DOJO_AVATAR_NAME=${AVATAR}
 export CYBER_DOJO_RUNNER=processful
 export CYBER_DOJO_SANDBOX=/sandboxes/${AVATAR}
 export HOME=/home/${AVATAR}

@@ -300,6 +300,7 @@ class Runner # processful
     # See kata_new() above.
     sh_cmd = [
       '/usr/local/bin/timeout_cyber_dojo.sh',
+      image_name,
       kata_id,
       avatar_name,
       max_seconds
