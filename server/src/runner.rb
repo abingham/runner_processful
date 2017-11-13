@@ -135,8 +135,7 @@ class Runner # processful
     @avatar_name = avatar_name
     assert_kata_exists
     assert_valid_avatar_name
-    dir = avatar_dir
-    _stdout,_stderr,status = quiet_exec(docker_cmd("[ -d #{dir} ]"))
+    _stdout,_stderr,status = quiet_exec(docker_cmd("[ -d #{avatar_dir} ]"))
     status == success
   end
 
@@ -570,7 +569,7 @@ end
 #   filename = avatar_dir + '/' + name
 #   dir = File.dirname(filename)
 #   shell_cmd = "mkdir -p #{dir};"
-#   shell_cmd += "cat >#{filename} && chown #{uid}:#{gid} #{filename}"
+#   shell_cmd += "cat > #{filename} && chown #{uid}:#{gid} #{filename}"
 #   cmd = "docker exec --interactive --user=root #{cid} sh -c '#{shell_cmd}'"
 #   stdout,stderr,ps = Open3.capture3(cmd, :stdin_data => content)
 #   assert ps.success?
