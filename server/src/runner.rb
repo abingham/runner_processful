@@ -32,8 +32,6 @@ class Runner # processful
     assert_valid_kata_id
   end
 
-  attr_reader :image_name, :kata_id
-
   # - - - - - - - - - - - - - - - - - -
   # image
   # - - - - - - - - - - - - - - - - - -
@@ -134,9 +132,10 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def avatar_exists?(avatar_name)
+    @avatar_name = avatar_name
     assert_kata_exists
-    assert_valid_avatar_name(avatar_name)
-    dir = avatar_dir(avatar_name)
+    assert_valid_avatar_name
+    dir = avatar_dir
     _stdout,_stderr,status = quiet_exec(docker_cmd("[ -d #{dir} ]"))
     status == success
   end
@@ -144,21 +143,23 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def avatar_new(avatar_name, starting_files)
+    @avatar_name = avatar_name
     assert_kata_exists
-    refute_avatar_exists(avatar_name)
+    refute_avatar_exists
     make_shared_dir
     chown_shared_dir
-    make_avatar_dir(avatar_name)
-    chown_avatar_dir(avatar_name)
-    write_files(avatar_name, starting_files)
+    make_avatar_dir
+    chown_avatar_dir
+    write_files(starting_files)
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def avatar_old(avatar_name)
+    @avatar_name = avatar_name
     assert_kata_exists
-    assert_avatar_exists(avatar_name)
-    remove_avatar_dir(avatar_name)
+    assert_avatar_exists
+    remove_avatar_dir
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -178,12 +179,17 @@ class Runner # processful
 =end
 
   def run(avatar_name, deleted_filenames, changed_files, max_seconds)
+    @avatar_name = avatar_name
     assert_kata_exists
-    assert_avatar_exists(avatar_name)
-    delete_files(avatar_name, deleted_filenames)
-    write_files(avatar_name, changed_files)
-    stdout,stderr,status,colour = run_timeout_cyber_dojo_sh(avatar_name, max_seconds)
-    { stdout:stdout, stderr:stderr, status:status, colour:colour }
+    assert_avatar_exists
+    delete_files(deleted_filenames)
+    write_files(changed_files)
+    stdout,stderr,status,colour = run_timeout_cyber_dojo_sh(max_seconds)
+    { stdout:truncated(stdout),
+      stderr:truncated(stderr),
+      status:status,
+      colour:colour
+    }
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -198,27 +204,19 @@ class Runner # processful
     5000
   end
 
-  def user_id(avatar_name)
-    assert_valid_avatar_name(avatar_name)
-    40000 + all_avatars_names.index(avatar_name)
+  def user_id(name = avatar_name)
+    40000 + all_avatars_names.index(name)
   end
 
-  def avatar_dir(avatar_name)
-    assert_valid_avatar_name(avatar_name)
-    "#{sandboxes_root_dir}/#{avatar_name}"
+  def avatar_dir(name = avatar_name)
+    "#{sandboxes_root_dir}/#{name}"
   end
 
   def sandboxes_root_dir
     '/sandboxes'
   end
 
-  def timed_out
-    'timed_out'
-  end
-
-  private
-
-  attr_reader :disk, :shell
+  private # = = = = = = = = = = = = = = = = = = =
 
   def remove_container_cmd
     "docker rm --force --volumes #{container_name}"
@@ -226,33 +224,30 @@ class Runner # processful
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def delete_files(avatar_name, pathed_filenames)
-    # Most of the time pathed_filenames == []
+  def delete_files(pathed_filenames)
     pathed_filenames.each do |pathed_filename|
-      # so do dir inside the block
-      dir = avatar_dir(avatar_name)
-      assert_docker_exec("rm #{dir}/#{pathed_filename}")
+      assert_docker_exec("rm #{avatar_dir}/#{pathed_filename}")
     end
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def write_files(avatar_name, files)
+  def write_files(files)
     return if files == {}
     Dir.mktmpdir('runner') do |tmp_dir|
       # Save the files onto the host...
       files.each do |pathed_filename, content|
         sub_dir = File.dirname(pathed_filename)
-        if sub_dir != '.'
+        unless sub_dir == '.'
           src_dir = tmp_dir + '/' + sub_dir
           shell.exec("mkdir -p #{src_dir}")
         end
-        host_filename = tmp_dir + '/' + pathed_filename
-        disk.write(host_filename, content)
+        src_filename = tmp_dir + '/' + pathed_filename
+        disk.write(src_filename, content)
       end
       # ...then tar-pipe them into the container.
-      dir = avatar_dir(avatar_name)
-      uid = user_id(avatar_name)
+      dir = avatar_dir
+      uid = user_id
       tar_pipe = [
         "chmod 755 #{tmp_dir}",
         "&& cd #{tmp_dir}",
@@ -295,7 +290,7 @@ class Runner # processful
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def run_timeout_cyber_dojo_sh(avatar_name, max_seconds)
+  def run_timeout_cyber_dojo_sh(max_seconds)
     # The processes __inside__ the docker container
     # are killed by /usr/local/bin/timeout_cyber_dojo.sh
     # See kata_new() above.
@@ -336,9 +331,9 @@ class Runner # processful
         status = $?.exitstatus
         w_stdout.close
         w_stderr.close
-        stdout = truncated(cleaned(r_stdout.read))
-        stderr = truncated(cleaned(r_stderr.read))
-        colour = red_amber_green(container_name, stdout, stderr, status)
+        stdout = cleaned(r_stdout.read)
+        stderr = cleaned(r_stderr.read)
+        colour = red_amber_green(stdout, stderr, status)
         [stdout, stderr, status, colour]
       end
     rescue Timeout::Error
@@ -350,7 +345,11 @@ class Runner # processful
       # The container is killed by kata_old()
       Process.kill(-9, pid)
       Process.detach(pid)
-      ['', '', 137, timed_out]
+      status = 137
+      stdout = ''
+      stderr = ''
+      colour = 'timed_out'
+      [stdout, stderr, status, colour]
     ensure
       w_stdout.close unless w_stdout.closed?
       w_stderr.close unless w_stderr.closed?
@@ -361,7 +360,8 @@ class Runner # processful
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def red_amber_green(cid, stdout_arg, stderr_arg, status_arg)
+  def red_amber_green(stdout_arg, stderr_arg, status_arg)
+    cid = container_name
     cmd = 'cat /usr/local/bin/red_amber_green.rb'
     out,_err = assert_exec("docker exec #{cid} sh -c '#{cmd}'")
     rag = eval(out)
@@ -386,22 +386,117 @@ class Runner # processful
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # image_name
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  attr_reader :image_name
+
+  def assert_valid_image_name
+    unless valid_image_name?(image_name)
+      fail_image_name('invalid')
+    end
+  end
+
+  def fail_image_name(message)
+    fail bad_argument("image_name:#{message}")
+  end
+
+  include ValidImageName
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # kata
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def assert_kata_exists
+    unless kata_exists?
+      fail_kata_id('!exists')
+    end
+  end
+
+  def refute_kata_exists
+    if kata_exists?
+      fail_kata_id('exists')
+    end
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # kata_id
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  attr_reader :kata_id
+
+  def assert_valid_kata_id
+    unless valid_kata_id?
+      fail_kata_id('invalid')
+    end
+  end
+
+  def valid_kata_id?
+    kata_id.class.name == 'String' &&
+      kata_id.length == 10 &&
+        kata_id.chars.all? { |char| hex?(char) }
+  end
+
+  def hex?(char)
+    '0123456789ABCDEF'.include?(char)
+  end
+
+  def fail_kata_id(message)
+    fail bad_argument("kata_id:#{message}")
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # avatar
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def assert_avatar_exists
+    unless avatar_exists?(avatar_name)
+      fail_avatar_name('!exists')
+    end
+  end
+
+  def refute_avatar_exists
+    if avatar_exists?(avatar_name)
+      fail_avatar_name('exists')
+    end
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # avatar_name
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  attr_reader :avatar_name
+
+  def assert_valid_avatar_name
+    unless valid_avatar_name?
+      fail_avatar_name('invalid')
+    end
+  end
+
+  def valid_avatar_name?
+    all_avatars_names.include?(avatar_name)
+  end
+
+  def fail_avatar_name(message)
+    fail bad_argument("avatar_name:#{message}")
+  end
+
+  include AllAvatarsNames
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # dirs
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def make_avatar_dir(avatar_name)
-    dir = avatar_dir(avatar_name)
-    assert_docker_exec("mkdir -m 755 #{dir}")
+  def make_avatar_dir
+    assert_docker_exec("mkdir -m 755 #{avatar_dir}")
   end
 
-  def chown_avatar_dir(avatar_name)
-    dir = avatar_dir(avatar_name)
-    assert_docker_exec("chown #{avatar_name}:#{group} #{dir}")
+  def chown_avatar_dir
+    assert_docker_exec("chown #{avatar_name}:#{group} #{avatar_dir}")
   end
 
-  def remove_avatar_dir(avatar_name)
-    dir = avatar_dir(avatar_name)
-    assert_docker_exec("rm -rf #{dir}")
+  def remove_avatar_dir
+    assert_docker_exec("rm -rf #{avatar_dir}")
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -420,86 +515,6 @@ class Runner # processful
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # validation
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  include ValidImageName
-
-  def assert_valid_image_name
-    unless valid_image_name?(image_name)
-      fail_image_name('invalid')
-    end
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def assert_kata_exists
-    unless kata_exists?
-      fail_kata_id('!exists')
-    end
-  end
-
-  def refute_kata_exists
-    if kata_exists?
-      fail_kata_id('exists')
-    end
-  end
-
-  def assert_valid_kata_id
-    unless valid_kata_id?
-      fail_kata_id('invalid')
-    end
-  end
-
-  def valid_kata_id?
-    kata_id.class.name == 'String' &&
-      kata_id.length == 10 &&
-        kata_id.chars.all? { |char| hex?(char) }
-  end
-
-  def hex?(char)
-    '0123456789ABCDEF'.include?(char)
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def assert_valid_avatar_name(avatar_name)
-    unless valid_avatar_name?(avatar_name)
-      fail_avatar_name('invalid')
-    end
-  end
-
-  include AllAvatarsNames
-
-  def valid_avatar_name?(avatar_name)
-    all_avatars_names.include?(avatar_name)
-  end
-
-  def assert_avatar_exists(avatar_name)
-    unless avatar_exists?(avatar_name)
-      fail_avatar_name('!exists')
-    end
-  end
-
-  def refute_avatar_exists(avatar_name)
-    if avatar_exists?(avatar_name)
-      fail_avatar_name('exists')
-    end
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def fail_kata_id(message)
-    fail bad_argument("kata_id:#{message}")
-  end
-
-  def fail_image_name(message)
-    fail bad_argument("image_name:#{message}")
-  end
-
-  def fail_avatar_name(message)
-    fail bad_argument("avatar_name:#{message}")
-  end
 
   def bad_argument(message)
     ArgumentError.new(message)
@@ -532,6 +547,8 @@ class Runner # processful
   def space
     ' '
   end
+
+  attr_reader :disk, :shell # externals
 
 end
 

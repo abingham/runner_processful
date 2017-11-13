@@ -223,7 +223,7 @@ class TestBase < HexMiniTest
   end
 
   def timed_out
-    runner.timed_out
+    'timed_out'
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
