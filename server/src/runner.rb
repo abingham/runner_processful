@@ -79,12 +79,12 @@ class Runner # processful
     quiet_exec(remove_container_cmd)
     name = container_name
     args = [
-      '--detach',
-      '--init',                            # pid-1 process
-      '--interactive',                     # later execs
+      '--detach',       # for later exec
+      '--init',         # pid-1 process
+      '--interactive',  # for tar-pipe
       limits,
-      "--name=#{name}",
-      '--user=root',
+      "--name=#{name}", # for easy clean up
+      '--user=root',    # chown permission
       "--volume #{name}:#{sandboxes_root_dir}:rw"
     ].join(space)
 
@@ -161,10 +161,7 @@ class Runner # processful
     @avatar_name = avatar_name
     assert_kata_exists
     refute_avatar_exists
-    make_shared_dir
-    chown_shared_dir
-    make_avatar_dir
-    chown_avatar_dir
+    make_and_chown_dirs
     write_files(starting_files)
   end
 
@@ -501,31 +498,17 @@ class Runner # processful
   # dirs
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def make_avatar_dir
+  def make_and_chown_dirs
+    # first avatar makes the shared dir
+    shared_dir = "#{sandboxes_root_dir}/shared"
+    assert_docker_exec("mkdir -m 775 #{shared_dir} || true")
     assert_docker_exec("mkdir -m 755 #{avatar_dir}")
-  end
-
-  def chown_avatar_dir
-    assert_docker_exec("chown #{avatar_name}:#{group} #{avatar_dir}")
+    assert_docker_exec("chown root:#{group} #{shared_dir}")
+    assert_docker_exec("chown #{uid}:#{gid} #{avatar_dir}")
   end
 
   def remove_avatar_dir
     assert_docker_exec("rm -rf #{avatar_dir}")
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def make_shared_dir
-    # first avatar makes the shared dir
-    assert_docker_exec("mkdir -m 775 #{shared_dir} || true")
-  end
-
-  def chown_shared_dir
-    assert_docker_exec("chown root:#{group} #{shared_dir}")
-  end
-
-  def shared_dir
-    "#{sandboxes_root_dir}/shared"
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -577,7 +560,7 @@ end
 # If only one file has changed you might image this is quicker
 # but testing shows its actually a bit slower.
 #
-# For interest's sake here's how you tar pipe from a string and
+# For interests sake here's how you tar pipe from a string and
 # avoid the intermediate /tmp files:
 #
 # require 'open3'
@@ -586,7 +569,13 @@ end
 #   dir = File.dirname(filename)
 #   shell_cmd = "mkdir -p #{dir};"
 #   shell_cmd += "cat > #{filename} && chown #{uid}:#{gid} #{filename}"
-#   cmd = "docker exec --interactive --user=root #{cid} sh -c '#{shell_cmd}'"
+#   cmd = [
+#     'docker exec',
+#     '--interactive',
+#     '--user=root',
+#     container_name,
+#     "sh -c '#{shell_cmd}'"
+#   ].join(space)
 #   stdout,stderr,ps = Open3.capture3(cmd, :stdin_data => content)
 #   assert ps.success?
 # end
