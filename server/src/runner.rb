@@ -348,11 +348,27 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
   def red_amber_green(stdout_arg, stderr_arg, status_arg)
-    cid = container_name
+    # If cyber-dojo.sh has crippled the container (eg fork-bomb)
+    # then the [docker exec] will mostly likely raise.
+    # Not worth creating a new container for this.
     cmd = 'cat /usr/local/bin/red_amber_green.rb'
-    out,_err = assert_exec("docker exec #{cid} sh -c '#{cmd}'")
-    rag = eval(out)
-    rag.call(stdout_arg, stderr_arg, status_arg).to_s
+    begin
+      # The rag lambda tends to look like this:
+      #   lambda { |stdout, stderr, status| ... }
+      # so avoid using stdout,stderr,status as identifiers
+      # or you'll get shadowing outer local variables warnings.
+      out,_err = assert_exec("docker exec #{container_name} sh -c '#{cmd}'")
+      rag = eval(out)
+      colour = rag.call(stdout_arg, stderr_arg, status_arg).to_s
+      # :nocov:
+      unless ['red','amber','green'].include? colour
+        colour = 'amber'
+      end
+      colour
+    rescue
+      'amber'
+      # :nocov:
+    end
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
