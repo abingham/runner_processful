@@ -38,8 +38,7 @@ class RunTest < TestBase
           }
         })
         ls_files = ls_parse(stdout)
-        uid = runner.user_id('salmon')
-        group = runner.group
+        uid = user_id('salmon')
         assert_equal_atts('a', 'drwxr-xr-x', uid, group, 4096, ls_files)
       }
     }
@@ -58,8 +57,7 @@ class RunTest < TestBase
           }
         })
         ls_files = ls_parse(stdout)
-        uid = runner.user_id('salmon')
-        group = runner.group
+        uid = user_id('salmon')
         assert_equal_atts('b', 'drwxr-xr-x', uid, group, 4096, ls_files)
       }
     }
@@ -78,8 +76,7 @@ class RunTest < TestBase
           }
         })
         ls_files = ls_parse(stdout)
-        uid = runner.user_id('salmon')
-        group = runner.group
+        uid = user_id('salmon')
         assert_equal_atts('hello.txt', '-rw-r--r--', uid, group, 11, ls_files)
 
         run4({

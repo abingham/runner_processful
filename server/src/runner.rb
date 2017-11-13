@@ -169,12 +169,12 @@ class Runner # processful
 =begin
   def run_cyber_dojo_sh(
     avatar_name,
-    deleted_filenames,
-    unchanged_files, changed_files, new_files,
+    deleted_files, unchanged_files, changed_files, new_files,
     max_seconds
   )
-    all_files = [*unchanged_files, *changed_files, *new_files].to_h
-    run(avatar_name, deleted_filenames, all_files, max_seconds)
+    unchanged_files = nil # we're stateful
+    all_files = [*changed_files, *new_files].to_h
+    run(avatar_name, deleted_files.keys, all_files, max_seconds)
   end
 =end
 
@@ -192,31 +192,9 @@ class Runner # processful
     }
   end
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # properties
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def group
-    'cyber-dojo'
-  end
-
-  def gid
-    5000
-  end
-
-  def user_id(name = avatar_name)
-    40000 + all_avatars_names.index(name)
-  end
-
-  def avatar_dir(name = avatar_name)
-    "#{sandboxes_root_dir}/#{name}"
-  end
-
-  def sandboxes_root_dir
-    '/sandboxes'
-  end
-
   private # = = = = = = = = = = = = = = = = = = =
+
+  include StringTruncater
 
   def remove_container_cmd
     "docker rm --force --volumes #{container_name}"
@@ -246,8 +224,6 @@ class Runner # processful
         disk.write(src_filename, content)
       end
       # ...then tar-pipe them into the container.
-      dir = avatar_dir
-      uid = user_id
       tar_pipe = [
         "chmod 755 #{tmp_dir}",
         "&& cd #{tmp_dir}",
@@ -262,7 +238,7 @@ class Runner # processful
                     container_name,
                     'sh -c',
                     "'",          # open quote
-                    "cd #{dir}",
+                    "cd #{avatar_dir}",
                     '&& tar',
                           '--touch', # [2]
                           '-zxf', # extract from a compressed tar file
@@ -307,7 +283,6 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
   include StringCleaner
-  include StringTruncater
 
   def run_timeout(cmd, max_seconds)
     # This kills the container from the "outside".
@@ -379,12 +354,6 @@ class Runner # processful
     names.uniq - ['<none>']
   end
 
-  def container_name
-    # Give containers a name with a specific prefix so they
-    # can be cleaned up if any fail to be removed/reaped.
-    'test_run__runner_processful_' + kata_id
-  end
-
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # image_name
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -402,6 +371,36 @@ class Runner # processful
   end
 
   include ValidImageName
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # container properties
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def container_name
+    # Give containers a name with a specific prefix so they
+    # can be cleaned up if any fail to be removed/reaped.
+    'test_run__runner_processful_' + kata_id
+  end
+
+  def group
+    'cyber-dojo'
+  end
+
+  def gid
+    5000
+  end
+
+  def uid
+    40000 + all_avatars_names.index(avatar_name)
+  end
+
+  def avatar_dir
+    "#{sandboxes_root_dir}/#{avatar_name}"
+  end
+
+  def sandboxes_root_dir
+    '/sandboxes'
+  end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # kata
