@@ -6,7 +6,10 @@ class Demo
     @html = ''
     in_kata {
       as_avatar {
-        red; amber; green; time_out
+        red
+        amber
+        green
+        time_out
       }
     }
     [ 200, { 'Content-Type' => 'text/html' }, [ @html ] ]
