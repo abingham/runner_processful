@@ -54,20 +54,6 @@ Pulls the image with the given image_name.
 
 - - - -
 
-# GET kata_exists?
-Asks whether the kata with the given kata_id exists.
-- parameters, eg
-```
-  { "image_name": "cyberdojofoundation/gcc_assert",
-       "kata_id": "15B9AD6C42"
-  }
-```
-- returns true if it does, false if it doesn't.
-```
-  { "kata_exists?": true  }
-  { "kata_exists?": false }
-```
-
 # POST kata_new
 Sets up the kata with the given kata_id.
 Must be called once before any call to avatar_new with the same kata_id.
@@ -88,22 +74,6 @@ Tears down the kata with the given kata_id.
 ```
 
 - - - -
-
-# GET avatar_exists?
-Asks whether the avatar with the given avatar_name
-has entered the kata with the given kata_id.
-- parameters, eg
-```
-  {  "image_name": "cyberdojofoundation/gcc_assert",
-        "kata_id": "15B9AD6C42",
-    "avatar_name": "salmon"
-  }
-```
-- returns true if it does, false if it doesn't
-```
-  { "avatar_exists?": true  }
-  { "avatar_exists?": false }
-```
 
 # POST avatar_new
 Sets up the avatar with the given avatar_name, in the
@@ -136,6 +106,7 @@ in the kata with the given kata_id.
 - - - -
 
 # POST run
+Deprecated.
 For the avatar with the given avatar_name, in the kata with the given kata_id,
 removes the deleted_filenames, saves changed_files, runs cyber-dojo.sh
 Calls to run must be preceeded by one call to kata_new with the same kata_id,

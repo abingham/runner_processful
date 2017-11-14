@@ -19,10 +19,6 @@ class TestBase < HexMiniTest
 
   # - - - - - - - - - - - - - - - - - - - - - - -
 
-  def kata_exists?(named_args={})
-    runner.kata_exists?(*defaulted_args(__method__, named_args))
-  end
-
   def kata_new(named_args={})
     runner.kata_new(*defaulted_args(__method__, named_args))
   end
@@ -32,10 +28,6 @@ class TestBase < HexMiniTest
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - -
-
-  def avatar_exists?(named_args={})
-    runner.avatar_exists?(*defaulted_args(__method__, named_args))
-  end
 
   def avatar_new(named_args={})
     runner.avatar_new(*defaulted_args(__method__, named_args))

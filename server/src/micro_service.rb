@@ -6,41 +6,48 @@ class MicroService
 
   def call(env)
     request = Rack::Request.new(env)
-    @args = JSON.parse(request.body.read)
-    case request.path_info
-      when /image_pulled?/
-        body = invoke('image_pulled?')
-      when /image_pull/
-        body = invoke('image_pull')
-      when /kata_exists?/
-        body = invoke('kata_exists?')
-      when /kata_new/
-        body = invoke('kata_new')
-      when /kata_old/
-        body = invoke('kata_old')
-      when /avatar_exists?/
-        body = invoke('avatar_exists?', avatar_name)
-      when /avatar_new/
-        body = invoke('avatar_new', avatar_name, starting_files)
-      when /avatar_old/
-        body = invoke('avatar_old', avatar_name)
-      when /run/
-        args  = [ avatar_name ]
-        args += [ deleted_filenames, changed_files ]
-        args += [ max_seconds ]
-        body = invoke('run', *args)
-    end
-    [ 200, { 'Content-Type' => 'application/json' }, [ body.to_json ] ]
+    @json_args = json_args(request)
+    @name = request.path_info[1..-1] # lose leading /
+    @args = case @name
+      when /^image_pulled$/
+        @name += '?'
+        []
+      when /^image_pull$/
+        []
+      when /^kata_new$/
+        []
+      when /^kata_old$/
+        []
+      when /^avatar_new$/
+        [avatar_name, starting_files]
+      when /^avatar_old$/
+        [avatar_name]
+      when /^run$/
+        [avatar_name, deleted_filenames, changed_files, max_seconds]
+      else
+        @name = nil
+        []
+      end
+    [ 200, { 'Content-Type' => 'application/json' }, [ invoke.to_json ] ]
   end
 
-  private
+  private # = = = = = = = = = = = =
 
-  def invoke(name, *args)
+  def invoke
     runner = Runner.new(self, image_name, kata_id)
-    { name => runner.send(name, *args) }
+    { @name => runner.send(@name, *@args) }
   rescue Exception => e
-    log << "EXCEPTION: #{e.class.name}.#{name} #{e.message}"
+    log << "EXCEPTION: #{e.class.name}.#{@name} #{e.message}"
     { 'exception' => e.message }
+  end
+
+  # - - - - - - - - - - - - - - - -
+
+  def json_args(request)
+    JSON.parse(request.body.read)
+  rescue StandardError => e
+    log << "EXCEPTION: #{e.class.name}.#{__method__} #{e.message}"
+    {}
   end
 
   # - - - - - - - - - - - - - - - -
@@ -49,7 +56,9 @@ class MicroService
 
   def self.request_args(*names)
     names.each { |name|
-      define_method name, &lambda { @args[name.to_s] }
+      define_method name, &lambda {
+        @json_args[name.to_s]
+      }
     }
   end
 
