@@ -163,6 +163,7 @@ will be "red", "amber", or "green". eg
         "stdout": "makefile:17: recipe for target 'test' failed\n",
         "stderr": "invalid suffix sss on integer constant",
         "colour": "red"
+      }
     }
 ```
 If the run did not complete in max_seconds,
@@ -174,6 +175,7 @@ will be "timed_out". eg
         "stdout": "",
         "stderr": "",
         "colour": "timed_out"
+      }
     }
 ```
 
