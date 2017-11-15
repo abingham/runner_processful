@@ -60,49 +60,15 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def kata_exists?
-    cmd = [
-      'docker ps',
-        '--quiet',
-        '--all',
-        '--filter status=running',
-        "--filter name=#{container_name}"
-    ].join(space)
-    stdout,_ = assert_exec(cmd)
-    stdout.strip != ''
+    container_exists?
   end
 
   def kata_new
     refute_kata_exists
-    # The container may have exited but its
-    # volume may not have been collected yet.
+    # Resurrection! The container may have finished its
+    # sleep but its volume may not have been collected yet.
     quiet_exec(remove_container_cmd)
-    name = container_name
-    args = [
-      '--detach',       # for later exec
-      '--init',         # pid-1 process
-      '--interactive',  # for tar-pipe
-      limits,
-      "--name=#{name}", # for easy clean up
-      '--user=root',    # chown permission
-      "--volume #{name}:#{sandboxes_root_dir}:rw"
-    ].join(space)
-
-    init_filename = '/usr/local/bin/cyber-dojo-init.sh'
-    cmd = [
-      "docker run #{args}",
-      image_name,
-      "sh -c '([ -f #{init_filename}] && #{init_filename}); sleep 3h'"
-    ].join(space)
-
-    assert_exec(cmd)
-
-    my_dir = File.expand_path(File.dirname(__FILE__))
-    docker_cp = [
-      'docker cp',
-      "#{my_dir}/timeout_cyber_dojo.sh",
-      "#{name}:/usr/local/bin"
-    ].join(space)
-    assert_exec(docker_cp)
+    create_container
   end
 
   def kata_old
@@ -172,8 +138,6 @@ class Runner # processful
 
   private # = = = = = = = = = = = = = = = = = = =
 
-  include StringTruncater
-
   def limits
     # There is no cpu-ulimit. This is because a cpu-ulimit of 10
     # seconds could kill a container after only 5 seconds...
@@ -205,12 +169,6 @@ class Runner # processful
   GB = 1024 * MB
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def remove_container_cmd
-    "docker rm --force --volumes #{container_name}"
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - -
 
   def delete_files(pathed_filenames)
     pathed_filenames.each do |pathed_filename|
@@ -292,8 +250,6 @@ class Runner # processful
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
-  include StringCleaner
-
   def run_timeout(cmd, max_seconds)
     # The [docker exec] running on the _host_ is
     # killed by Process.kill. This does _not_ kill
@@ -328,6 +284,9 @@ class Runner # processful
       r_stderr.close
     end
   end
+
+  include StringCleaner
+  include StringTruncater
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -369,6 +328,56 @@ class Runner # processful
   end
 
   include ValidImageName
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  # container
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def container_exists?
+    cmd = [
+      'docker ps',
+        '--quiet',
+        '--all',
+        '--filter status=running',
+        "--filter name=#{container_name}"
+    ].join(space)
+    stdout,_ = assert_exec(cmd)
+    stdout.strip != ''
+  end
+
+  def create_container
+    name = container_name
+    args = [
+      '--detach',                 # for later exec
+      '--init',                   # pid-1 process
+      '--interactive',            # for tar-pipe
+      limits,
+      "--name=#{container_name}", # for easy clean up
+      '--user=root',              # chown permission
+      "--volume #{name}:#{sandboxes_root_dir}:rw"
+    ].join(space)
+
+    init_filename = '/usr/local/bin/cyber-dojo-init.sh'
+    cmd = [
+      "docker run #{args}",
+      image_name,
+      "sh -c '([ -f #{init_filename}] && #{init_filename}); sleep 3h'"
+    ].join(space)
+
+    assert_exec(cmd)
+
+    my_dir = File.expand_path(File.dirname(__FILE__))
+    docker_cp = [
+      'docker cp',
+      "#{my_dir}/timeout_cyber_dojo.sh",
+      "#{container_name}:/usr/local/bin"
+    ].join(space)
+    assert_exec(docker_cp)
+  end
+
+  def remove_container_cmd
+    "docker rm --force --volumes #{container_name}"
+  end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # container properties
