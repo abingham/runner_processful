@@ -135,98 +135,78 @@ class Runner # processful
 
   private # = = = = = = = = = = = = = = = = = = =
 
-  def limits
-    # There is no cpu-ulimit. This is because a cpu-ulimit of 10
-    # seconds could kill a container after only 5 seconds...
-    # The cpu-ulimit assumes one core. The host system running the
-    # docker container can have multiple cores or use hyperthreading.
-    # So a piece of code running on 2 cores, both 100% utilized could
-    # be killed after 5 seconds.
-    [
-      ulimit('data',   4*GB),  # data segment size
-      ulimit('core',   0),     # core file size
-      ulimit('fsize',  16*MB), # file size
-      ulimit('locks',  128),   # number of file locks
-      ulimit('nofile', 128),   # number of files
-      ulimit('nproc',  128),   # number of processes
-      ulimit('stack',  8*MB),  # stack size
-      '--memory=512m',         # ram
-      '--net=none',                      # no network
-      '--pids-limit=128',                # no fork bombs
-      '--security-opt=no-new-privileges' # no escalation
-    ].join(space)
-  end
-
-  def ulimit(name, limit)
-    "--ulimit #{name}=#{limit}:#{limit}"
-  end
-
-  KB = 1024
-  MB = 1024 * KB
-  GB = 1024 * MB
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def delete_files(pathed_filenames)
-    pathed_filenames.each do |pathed_filename|
-      assert_docker_exec("rm #{avatar_dir}/#{pathed_filename}")
+  def write_files(files)
+    unless files == {}
+      Dir.mktmpdir do |tmp_dir|
+        save_to(files, tmp_dir)
+        assert_exec(tar_pipe_from(tmp_dir))
+      end
     end
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def write_files(files)
-    return if files == {}
-    Dir.mktmpdir('runner') do |tmp_dir|
-      # Save the files onto the host...
-      files.each do |pathed_filename, content|
-        sub_dir = File.dirname(pathed_filename)
-        unless sub_dir == '.'
-          src_dir = tmp_dir + '/' + sub_dir
-          shell.exec("mkdir -p #{src_dir}")
-        end
-        src_filename = tmp_dir + '/' + pathed_filename
-        disk.write(src_filename, content)
-      end
-      # ...then tar-pipe them into the container.
-      tar_pipe = [
-        "chmod 755 #{tmp_dir}",
-        "&& cd #{tmp_dir}",
-        '&& tar',
-              '-zcf', # create a compressed tar file
-              '-',    # write it to stdout
-              '.',    # tar the current directory
-              '|',    # pipe the tarfile...
-                  'docker exec', # ...into docker container
-                    "--user=#{uid}:#{gid}", # [1]
-                    '--interactive',
-                    container_name,
-                    'sh -c',
-                    "'",          # open quote
-                    "cd #{avatar_dir}",
-                    '&& tar',
-                          '--touch', # [2]
-                          '-zxf', # extract from a compressed tar file
-                          '-',    # which is read from stdin
-                          '-C',   # save the extracted files to
-                          '.',    # the current directory
-                    "'"           # close quote
-      ].join(space)
-      # The files written into the container need the correct
-      # content, ownership, and date-time file-stamps.
-      # [1] is for the correct ownership.
-      # [2] is for the date-time stamps, in particular the
-      #     modification-date (stat %y). The tar --touch option
-      #     is not available in a default Alpine container.
-      #     So the test-framework container needs to update tar:
-      #        $ apk add --update tar
-      #     Also, in a default Alpine container the date-time
-      #     file-stamps have a granularity of one second. In other
-      #     words the microseconds value is always zero.
-      #     So the test-framework container also needs to fix this:
-      #        $ apk add --update coreutils
-      assert_exec(tar_pipe)
+  def delete_files(filenames)
+    filenames.each do |filename|
+      assert_docker_exec("rm #{avatar_dir}/#{filename}")
     end
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def save_to(files, tmp_dir)
+    files.each do |pathed_filename, content|
+      sub_dir = File.dirname(pathed_filename)
+      unless sub_dir == '.'
+        src_dir = tmp_dir + '/' + sub_dir
+        shell.exec("mkdir -p #{src_dir}")
+      end
+      src_filename = tmp_dir + '/' + pathed_filename
+      disk.write(src_filename, content)
+    end
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def tar_pipe_from(tmp_dir)
+    # [1] is for file-stamp date-time granularity
+    # This relates to the modification-date (stat %y).
+    # The tar --touch option is not available in a default Alpine
+    # container. To add it:
+    #    $ apk add --update tar
+    # Also, in a default Alpine container the date-time
+    # file-stamps have a granularity of one second. In other
+    # words the microseconds value is always zero.
+    # To add microsecond granularity:
+    #    $ apk add --update coreutils
+    # See the file builder/image_builder.rb on
+    # https://github.com/cyber-dojo-languages/image_builder/blob/master/
+    # In particular the methods
+    #    o) update_tar_command
+    #    o) install_coreutils_command
+    [
+      "chmod 755 #{tmp_dir}",
+      "&& cd #{tmp_dir}",
+      '&& tar',
+            '-zcf', # create a compressed tar file
+            '-',    # write it to stdout
+            '.',    # tar the current directory
+            '|',    # pipe the tarfile...
+                'docker exec', # ...into docker container
+                  "--user=#{uid}:#{gid}", # [1]
+                  '--interactive',
+                  container_name,
+                  'sh -c',
+                  "'",          # open quote
+                  "cd #{avatar_dir}",
+                  '&& tar',
+                        '--touch', # [2]
+                        '-zxf', # extract from a compressed tar file
+                        '-',    # which is read from stdin
+                        '-C',   # save the extracted files to
+                        '.',    # the current directory
+                  "'"           # close quote
+    ].join(space)
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
@@ -354,7 +334,8 @@ class Runner # processful
 
     init_filename = '/usr/local/bin/cyber-dojo-init.sh'
     docker_run = [
-      "docker run #{args}",
+      'docker run',
+      args,
       image_name,
       "sh -c '([ -f #{init_filename}] && #{init_filename}); sleep 3h'"
     ].join(space)
@@ -369,6 +350,38 @@ class Runner # processful
 
     assert_exec(docker_cp)
   end
+
+  def limits
+    # There is no cpu-ulimit. This is because a cpu-ulimit of 10
+    # seconds could kill a container after only 5 seconds...
+    # The cpu-ulimit assumes one core. The host system running the
+    # docker container can have multiple cores or use hyperthreading.
+    # So a piece of code running on 2 cores, both 100% utilized could
+    # be killed after 5 seconds.
+    [
+      ulimit('data',   4*GB),  # data segment size
+      ulimit('core',   0),     # core file size
+      ulimit('fsize',  16*MB), # file size
+      ulimit('locks',  128),   # number of file locks
+      ulimit('nofile', 128),   # number of files
+      ulimit('nproc',  128),   # number of processes
+      ulimit('stack',  8*MB),  # stack size
+      '--memory=512m',         # ram
+      '--net=none',                      # no network
+      '--pids-limit=128',                # no fork bombs
+      '--security-opt=no-new-privileges' # no escalation
+    ].join(space)
+  end
+
+  def ulimit(name, limit)
+    "--ulimit #{name}=#{limit}:#{limit}"
+  end
+
+  KB = 1024
+  MB = 1024 * KB
+  GB = 1024 * MB
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def remove_container
     assert_exec("docker rm --force #{container_name}")
