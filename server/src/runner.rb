@@ -65,15 +65,12 @@ class Runner # processful
 
   def kata_new
     refute_kata_exists
-    # Resurrection! The container may have finished its
-    # sleep but its volume may not have been collected yet.
-    quiet_exec(remove_container_cmd)
     create_container
   end
 
   def kata_old
     assert_kata_exists
-    assert_exec(remove_container_cmd)
+    remove_container
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -112,7 +109,7 @@ class Runner # processful
 =begin
   def run_cyber_dojo_sh(
     avatar_name,
-    deleted_files, unchanged_files, changed_files, new_files,
+    new_files, deleted_files, unchanged_files, changed_files,
     max_seconds
   )
     unchanged_files = nil # we're stateful
@@ -346,67 +343,41 @@ class Runner # processful
   end
 
   def create_container
-    name = container_name
     args = [
       '--detach',                 # for later exec
       '--init',                   # pid-1 process
       '--interactive',            # for tar-pipe
       limits,
       "--name=#{container_name}", # for easy clean up
-      '--user=root',              # chown permission
-      "--volume #{name}:#{sandboxes_root_dir}:rw"
+      '--user=root'               # chown permission
     ].join(space)
 
     init_filename = '/usr/local/bin/cyber-dojo-init.sh'
-    cmd = [
+    docker_run = [
       "docker run #{args}",
       image_name,
       "sh -c '([ -f #{init_filename}] && #{init_filename}); sleep 3h'"
     ].join(space)
 
-    assert_exec(cmd)
+    assert_exec(docker_run)
 
-    my_dir = File.expand_path(File.dirname(__FILE__))
     docker_cp = [
       'docker cp',
       "#{my_dir}/timeout_cyber_dojo.sh",
       "#{container_name}:/usr/local/bin"
     ].join(space)
+
     assert_exec(docker_cp)
   end
 
-  def remove_container_cmd
-    "docker rm --force --volumes #{container_name}"
+  def remove_container
+    assert_exec("docker rm --force #{container_name}")
   end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # container properties
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def container_name
     # Give containers a name with a specific prefix so they
     # can be cleaned up if any fail to be removed/reaped.
     'test_run__runner_processful_' + kata_id
-  end
-
-  def group
-    'cyber-dojo'
-  end
-
-  def gid
-    5000
-  end
-
-  def uid
-    40000 + all_avatars_names.index(avatar_name)
-  end
-
-  def avatar_dir
-    "#{sandboxes_root_dir}/#{avatar_name}"
-  end
-
-  def sandboxes_root_dir
-    '/sandboxes'
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -467,6 +438,26 @@ class Runner # processful
     end
   end
 
+  def group
+    'cyber-dojo'
+  end
+
+  def gid
+    5000
+  end
+
+  def uid
+    40000 + all_avatars_names.index(avatar_name)
+  end
+
+  def avatar_dir
+    "#{sandboxes_root_dir}/#{avatar_name}"
+  end
+
+  def sandboxes_root_dir
+    '/sandboxes'
+  end
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # avatar_name
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -496,8 +487,8 @@ class Runner # processful
   def make_and_chown_dirs
     # first avatar makes the shared dir
     shared_dir = "#{sandboxes_root_dir}/shared"
-    assert_docker_exec("mkdir -m 775 #{shared_dir} || true")
-    assert_docker_exec("mkdir -m 755 #{avatar_dir}")
+    assert_docker_exec("mkdir -p -m 775 #{shared_dir} || true")
+    assert_docker_exec("mkdir -p -m 755 #{avatar_dir}")
     assert_docker_exec("chown root:#{group} #{shared_dir}")
     assert_docker_exec("chown #{uid}:#{gid} #{avatar_dir}")
   end
@@ -538,6 +529,10 @@ class Runner # processful
 
   def space
     ' '
+  end
+
+  def my_dir
+    File.expand_path(File.dirname(__FILE__))
   end
 
   attr_reader :disk, :shell # externals
