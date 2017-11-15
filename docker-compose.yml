@@ -1,10 +1,11 @@
 
-version: '2'
+version: '2.2'
 
 services:
   runner_processful_client:
     user: nobody
     image: cyberdojo/runner_processful_client
+    init: true
     container_name: runner_processful_client
     read_only: true
     tmpfs: /tmp
@@ -25,6 +26,7 @@ services:
   runner_processful:
     user: root
     image: cyberdojo/runner_processful
+    init: true
     container_name: runner_processful_server
     read_only: true
     tmpfs: /tmp

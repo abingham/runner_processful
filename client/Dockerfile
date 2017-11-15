@@ -27,22 +27,11 @@ RUN apk --update add --virtual build-dependencies build-base \
 RUN export RACK_ENV='production'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# install tini (for pid 1 zombie reaping)
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# https://github.com/krallin/tini
-# https://blog.phusion.nl/2015/01/20/
-#    docker-and-the-pid-1-zombie-reaping-problem/
-
-RUN apk add --update --repository http://dl-cdn.alpinelinux.org/alpine/edge/community/ tini
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# 4. setup client
+# setup client
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 COPY . /app
 ARG PORT
 EXPOSE ${PORT}
 ENV PORT=${PORT}
-
-ENTRYPOINT [ "/sbin/tini", "--" ]
 CMD [ "./up.sh" ]
