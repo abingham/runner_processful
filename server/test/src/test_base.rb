@@ -120,10 +120,6 @@ class TestBase < HexMiniTest
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def assert_stdout(expected)
-    assert_equal expected, stdout, quad
-  end
-
   def assert_stderr(expected)
     assert_equal expected, stderr, quad
   end
@@ -157,7 +153,7 @@ class TestBase < HexMiniTest
     run4(named_args)
     refute_equal timed_out, colour, quad
     assert_status success
-    assert_stderr ''
+    assert_equal '', stderr
     stdout
   end
 
@@ -165,8 +161,6 @@ class TestBase < HexMiniTest
     run4(named_args)
     assert_colour timed_out
     assert_status 137
-    assert_stdout ''
-    assert_stderr ''
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

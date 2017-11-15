@@ -37,10 +37,11 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - -
 
   def image_pulled?
-    image_names.include? image_name
+    cmd = 'docker images --format "{{.Repository}}"'
+    stdout,_ = assert_exec(cmd)
+    names = stdout.split("\n")
+    (names.uniq - ['<none>']).include? image_name
   end
-
-  # - - - - - - - - - - - - - - - - - -
 
   def image_pull
     # [1] The contents of stderr vary depending on Docker version
@@ -69,8 +70,6 @@ class Runner # processful
     stdout,_ = assert_exec(cmd)
     stdout.strip != ''
   end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def kata_new
     refute_kata_exists
@@ -106,38 +105,6 @@ class Runner # processful
     assert_exec(docker_cp)
   end
 
-  def limits
-    [                          # max
-      ulimit('data',   4*GB),  # data segment size
-      ulimit('core',   0),     # core file size
-      ulimit('fsize',  16*MB), # file size
-      ulimit('locks',  128),   # number of file locks
-      ulimit('nofile', 128),   # number of files
-      ulimit('nproc',  128),   # number of processes
-      ulimit('stack',  8*MB),  # stack size
-      '--memory=384m',         # ram
-      '--net=none',                      # no network
-      '--pids-limit=128',                # no fork bombs
-      '--security-opt=no-new-privileges' # no escalation
-    ].join(space)
-    # There is no cpu-ulimit. This is because a cpu-ulimit of 10
-    # seconds could kill a container after only 5 seconds...
-    # The cpu-ulimit assumes one core. The host system running the
-    # docker container can have multiple cores or use hyperthreading.
-    # So a piece of code running on 2 cores, both 100% utilized could
-    # be killed after 5 seconds.
-  end
-
-  def ulimit(name, limit)
-    "--ulimit #{name}=#{limit}:#{limit}"
-  end
-
-  KB = 1024
-  MB = 1024 * KB
-  GB = 1024 * MB
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
   def kata_old
     assert_kata_exists
     assert_exec(remove_container_cmd)
@@ -154,8 +121,6 @@ class Runner # processful
     _stdout,_stderr,status = quiet_exec(docker_cmd("[ -d #{avatar_dir} ]"))
     status == success
   end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def avatar_new(avatar_name, starting_files)
     @avatar_name = avatar_name
@@ -196,10 +161,11 @@ class Runner # processful
     assert_avatar_exists
     delete_files(deleted_filenames)
     write_files(changed_files)
-    stdout,stderr,status,colour = run_timeout_cyber_dojo_sh(max_seconds)
-    { stdout:truncated(stdout),
-      stderr:truncated(stderr),
-      status:status,
+    run_timeout_cyber_dojo_sh(max_seconds)
+    colour = @timed_out ? 'timed_out' : red_amber_green
+    { stdout:@stdout,
+      stderr:@stderr,
+      status:@status,
       colour:colour
     }
   end
@@ -207,6 +173,38 @@ class Runner # processful
   private # = = = = = = = = = = = = = = = = = = =
 
   include StringTruncater
+
+  def limits
+    # There is no cpu-ulimit. This is because a cpu-ulimit of 10
+    # seconds could kill a container after only 5 seconds...
+    # The cpu-ulimit assumes one core. The host system running the
+    # docker container can have multiple cores or use hyperthreading.
+    # So a piece of code running on 2 cores, both 100% utilized could
+    # be killed after 5 seconds.
+    [
+      ulimit('data',   4*GB),  # data segment size
+      ulimit('core',   0),     # core file size
+      ulimit('fsize',  16*MB), # file size
+      ulimit('locks',  128),   # number of file locks
+      ulimit('nofile', 128),   # number of files
+      ulimit('nproc',  128),   # number of processes
+      ulimit('stack',  8*MB),  # stack size
+      '--memory=384m',         # ram
+      '--net=none',                      # no network
+      '--pids-limit=128',                # no fork bombs
+      '--security-opt=no-new-privileges' # no escalation
+    ].join(space)
+  end
+
+  def ulimit(name, limit)
+    "--ulimit #{name}=#{limit}:#{limit}"
+  end
+
+  KB = 1024
+  MB = 1024 * KB
+  GB = 1024 * MB
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def remove_container_cmd
     "docker rm --force --volumes #{container_name}"
@@ -297,49 +295,35 @@ class Runner # processful
   include StringCleaner
 
   def run_timeout(cmd, max_seconds)
-    # This kills the container from the "outside".
-    # Originally I also time-limited the cpu-time from the "inside"
-    # using the cpu ulimit. However a cpu-ulimit of 10 seconds could
-    # kill the container after only 5 seconds. This is because the
-    # cpu-ulimit assumes one core. The host system running the docker
-    # container can have multiple cores or use hyperthreading. So a
-    # piece of code running on 2 cores, both 100% utilized could be
-    # killed after 5 seconds. So there is no longer a cpu-ulimit.
+    # The [docker exec] running on the _host_ is
+    # killed by Process.kill. This does _not_ kill
+    # the cyber-dojo.sh running _inside_ the docker
+    # container. The container is killed in the ensure
+    # block of in_container()
+    # See https://github.com/docker/docker/issues/9098
     r_stdout, w_stdout = IO.pipe
     r_stderr, w_stderr = IO.pipe
     pid = Process.spawn(cmd, {
-      pgroup:true,
-         out:w_stdout,
-         err:w_stderr
+      pgroup:true,     # become process leader
+         out:w_stdout, # redirection
+         err:w_stderr  # redirection
     })
     begin
       Timeout::timeout(max_seconds) do
-        Process.waitpid(pid)
-        status = $?.exitstatus
-        w_stdout.close
-        w_stderr.close
-        stdout = cleaned(r_stdout.read)
-        stderr = cleaned(r_stderr.read)
-        colour = red_amber_green(stdout, stderr, status)
-        [stdout, stderr, status, colour]
+        _, ps = Process.waitpid2(pid)
+        @status = ps.exitstatus
+        @timed_out = false
       end
     rescue Timeout::Error
-      # Kill the [docker exec] processes running
-      # on the host. This does __not__ kill the
-      # cyber-dojo.sh process running __inside__
-      # the docker container. See
-      # https://github.com/docker/docker/issues/9098
-      # The container is killed by kata_old()
-      Process.kill(-9, pid)
-      Process.detach(pid)
-      status = 137
-      stdout = ''
-      stderr = ''
-      colour = 'timed_out'
-      [stdout, stderr, status, colour]
+      Process.kill(-9, pid) # -ve means kill process-group
+      Process.detach(pid)   # prevent zombie-child
+      @status = 137          # don't wait for status from detach
+      @timed_out = true
     ensure
       w_stdout.close unless w_stdout.closed?
       w_stderr.close unless w_stderr.closed?
+      @stdout = truncated(cleaned(r_stdout.read))
+      @stderr = truncated(cleaned(r_stderr.read))
       r_stdout.close
       r_stderr.close
     end
@@ -347,19 +331,16 @@ class Runner # processful
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def red_amber_green(stdout_arg, stderr_arg, status_arg)
-    # If cyber-dojo.sh has crippled the container (eg fork-bomb)
-    # then the [docker exec] will mostly likely raise.
+  def red_amber_green
+    # @stdout and @stderr have been truncated and cleaned.
+    # In a crippled container (eg fork-bomb)
+    # the [docker exec] will mostly likely raise.
     # Not worth creating a new container for this.
     cmd = 'cat /usr/local/bin/red_amber_green.rb'
     begin
-      # The rag lambda tends to look like this:
-      #   lambda { |stdout, stderr, status| ... }
-      # so avoid using stdout,stderr,status as identifiers
-      # or you'll get shadowing outer local variables warnings.
       out,_err = assert_exec("docker exec #{container_name} sh -c '#{cmd}'")
       rag = eval(out)
-      colour = rag.call(stdout_arg, stderr_arg, status_arg).to_s
+      colour = rag.call(@stdout, @stderr, @status).to_s
       # :nocov:
       unless ['red','amber','green'].include? colour
         colour = 'amber'
@@ -369,17 +350,6 @@ class Runner # processful
       'amber'
       # :nocov:
     end
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # images
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def image_names
-    cmd = 'docker images --format "{{.Repository}}"'
-    stdout,_ = assert_exec(cmd)
-    names = stdout.split("\n")
-    names.uniq - ['<none>']
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -40,6 +40,7 @@ class TimeoutTest < TestBase
         max_seconds:2
     }
     assert_run_times_out(named_args)
+    assert_equal '', stdout
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -51,7 +52,7 @@ class TimeoutTest < TestBase
           and
         does produce output
       then
-        the output is nonetheless empty
+        the output is not empty
           and
         the colour is timed_out
     ) do
@@ -70,6 +71,7 @@ class TimeoutTest < TestBase
         max_seconds:2
     }
     assert_run_times_out(named_args)
+    refute_equal '', stdout
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
