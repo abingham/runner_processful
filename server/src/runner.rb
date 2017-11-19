@@ -16,16 +16,15 @@ require 'timeout'
 #
 # Positives:
 #   o) avatars can share state.
-#   o) opens the way to avatars sharing processes.
+#   o) avatars can share processes.
 #   o) fastest run(). In a rough sample
 #      ~30% faster than runner_stateful
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class Runner # processful
 
-  def initialize(parent, image_name, kata_id)
-    @disk = parent.disk
-    @shell = parent.shell
+  def initialize(external, image_name, kata_id)
+    @external = external
     @image_name = image_name
     @kata_id = kata_id
     assert_valid_image_name
@@ -46,7 +45,7 @@ class Runner # processful
   def image_pull
     # [1] The contents of stderr vary depending on Docker version
     _stdout,stderr,status = quiet_exec("docker pull #{image_name}")
-    if status == success
+    if status == shell.success
       return true
     elsif stderr.include?('not found') || stderr.include?('not exist')
       return false # [1]
@@ -82,7 +81,7 @@ class Runner # processful
     assert_kata_exists
     assert_valid_avatar_name
     _stdout,_stderr,status = quiet_exec(docker_cmd("[ -d #{avatar_dir} ]"))
-    status == success
+    status == shell.success
   end
 
   def avatar_new(avatar_name, starting_files)
@@ -536,10 +535,6 @@ class Runner # processful
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def success
-    shell.success
-  end
-
   def space
     ' '
   end
@@ -548,7 +543,15 @@ class Runner # processful
     File.expand_path(File.dirname(__FILE__))
   end
 
-  attr_reader :disk, :shell # externals
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def disk
+    @external.disk
+  end
+
+  def shell
+    @external.shell
+  end
 
 end
 
