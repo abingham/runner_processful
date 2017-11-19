@@ -16,9 +16,9 @@ class ShellBasherTest < TestBase
   # - - - - - - - - - - - - - - - - -
 
   test '14B',
-  %w( assert_exec(cmd) logs and raises when command fails ) do
+  %w( assert(cmd) logs and raises when command fails ) do
     error = assert_raises(ArgumentError) {
-      shell.assert_exec('false')
+      shell.assert('false')
     }
     assert_log [
       line,
@@ -28,7 +28,7 @@ class ShellBasherTest < TestBase
       'STDERR:'
     ]
     error = assert_raises(ArgumentError) {
-      shell.assert_exec('sed salmon')
+      shell.assert('sed salmon')
     }
     assert_log [
       line,

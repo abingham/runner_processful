@@ -97,7 +97,7 @@ class ShellMockerTest < TestBase
     shell.mock_exec(pwd, wd, stderr='', success)
     error = assert_raises {
       begin
-        fail 'forced'
+        raise 'forced'
       ensure
         shell.teardown
       end
@@ -107,13 +107,20 @@ class ShellMockerTest < TestBase
 
   # - - - - - - - - - - - - - - -
 
+  test '4FE',
+  %w( when status is zero assert returns stdout ) do
+    shell = ShellMocker.new(nil)
+    shell.mock_exec('true', 'so', 'se', 0)
+    assert_equal 'so', shell.assert('true')
+  end
+
   test '4FF',
   %w( when status is non-zero
-      assert_exec raises
+      assert raises
   ) do
     shell = ShellMocker.new(nil)
     shell.mock_exec('false', '', '', 1)
-    error = assert_raises { shell.assert_exec('false') }
+    error = assert_raises { shell.assert('false') }
     assert_equal 'command:false', error.message
   end
 

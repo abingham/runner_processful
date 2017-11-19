@@ -37,9 +37,7 @@ class Runner # processful
 
   def image_pulled?
     cmd = 'docker images --format "{{.Repository}}"'
-    stdout,_ = assert_exec(cmd)
-    names = stdout.split("\n")
-    (names.uniq - ['<none>']).include? image_name
+    shell.assert(cmd).split("\n").include? image_name
   end
 
   def image_pull
@@ -80,7 +78,7 @@ class Runner # processful
     @avatar_name = avatar_name
     assert_kata_exists
     assert_valid_avatar_name
-    _stdout,_stderr,status = quiet_exec(docker_cmd("[ -d #{avatar_dir} ]"))
+    _stdout,_stderr,status = quiet_exec(docker_exec("[ -d #{avatar_dir} ]"))
     status == shell.success
   end
 
@@ -138,7 +136,7 @@ class Runner # processful
     unless files == {}
       Dir.mktmpdir do |tmp_dir|
         save_to(files, tmp_dir)
-        assert_exec(tar_pipe_from(tmp_dir))
+        shell.assert(tar_pipe_from(tmp_dir))
       end
     end
   end
@@ -147,7 +145,7 @@ class Runner # processful
 
   def delete_files(filenames)
     filenames.each do |filename|
-      assert_docker_exec("rm #{avatar_dir}/#{filename}")
+      shell.assert(docker_exec("rm #{avatar_dir}/#{filename}"))
     end
   end
 
@@ -221,7 +219,7 @@ class Runner # processful
       avatar_name,
       max_seconds
     ].join(space)
-    run_timeout(docker_cmd(sh_cmd), max_seconds)
+    run_timeout(docker_exec(sh_cmd), max_seconds)
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
@@ -273,8 +271,7 @@ class Runner # processful
     # Not worth creating a new container for this.
     cmd = 'cat /usr/local/bin/red_amber_green.rb'
     begin
-      out,_err = assert_exec("docker exec #{container_name} sh -c '#{cmd}'")
-      rag = eval(out)
+      rag = eval(shell.assert(docker_exec(cmd)))
       colour = rag.call(@stdout, @stderr, @status).to_s
       # :nocov:
       unless ['red','amber','green'].include? colour
@@ -317,8 +314,7 @@ class Runner # processful
         '--filter status=running',
         "--filter name=#{container_name}"
     ].join(space)
-    stdout,_ = assert_exec(cmd)
-    stdout.strip != ''
+    shell.assert(cmd).strip != ''
   end
 
   def create_container
@@ -339,7 +335,7 @@ class Runner # processful
       "sh -c '([ -f #{init_filename}] && #{init_filename}); sleep 3h'"
     ].join(space)
 
-    assert_exec(docker_run)
+    shell.assert(docker_run)
 
     docker_cp = [
       'docker cp',
@@ -347,7 +343,7 @@ class Runner # processful
       "#{container_name}:/usr/local/bin"
     ].join(space)
 
-    assert_exec(docker_cp)
+    shell.assert(docker_cp)
   end
 
   def limits
@@ -383,7 +379,7 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def remove_container
-    assert_exec("docker rm --force #{container_name}")
+    shell.assert("docker rm --force #{container_name}")
   end
 
   def container_name
@@ -499,14 +495,14 @@ class Runner # processful
   def make_and_chown_dirs
     # first avatar makes the shared dir
     shared_dir = "#{sandboxes_root_dir}/shared"
-    assert_docker_exec("mkdir -p -m 775 #{shared_dir} || true")
-    assert_docker_exec("mkdir -p -m 755 #{avatar_dir}")
-    assert_docker_exec("chown root:#{group} #{shared_dir}")
-    assert_docker_exec("chown #{uid}:#{gid} #{avatar_dir}")
+    shell.assert(docker_exec("mkdir -p -m 775 #{shared_dir} || true"))
+    shell.assert(docker_exec("mkdir -p -m 755 #{avatar_dir}"))
+    shell.assert(docker_exec("chown root:#{group} #{shared_dir}"))
+    shell.assert(docker_exec("chown #{uid}:#{gid} #{avatar_dir}"))
   end
 
   def remove_avatar_dir
-    assert_docker_exec("rm -rf #{avatar_dir}")
+    shell.assert(docker_exec("rm -rf #{avatar_dir}"))
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -517,16 +513,8 @@ class Runner # processful
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def assert_docker_exec(cmd)
-    assert_exec(docker_cmd(cmd))
-  end
-
-  def docker_cmd(cmd)
+  def docker_exec(cmd)
     "docker exec #{container_name} sh -c '#{cmd}'"
-  end
-
-  def assert_exec(cmd)
-    shell.assert_exec(cmd)
   end
 
   def quiet_exec(cmd)
