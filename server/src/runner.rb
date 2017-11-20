@@ -317,6 +317,8 @@ class Runner # processful
     shell.assert(cmd).strip != ''
   end
 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   def create_container
     args = [
       '--detach',                 # for later exec
@@ -346,6 +348,8 @@ class Runner # processful
     shell.assert(docker_cp)
   end
 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   def limits
     # There is no cpu-ulimit. This is because a cpu-ulimit of 10
     # seconds could kill a container after only 5 seconds...
@@ -368,6 +372,8 @@ class Runner # processful
     ].join(space)
   end
 
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   def ulimit(name, limit)
     "--ulimit #{name}=#{limit}:#{limit}"
   end
@@ -381,6 +387,8 @@ class Runner # processful
   def remove_container
     shell.assert("docker rm --force #{container_name}")
   end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def container_name
     # Give containers a name with a specific prefix so they
