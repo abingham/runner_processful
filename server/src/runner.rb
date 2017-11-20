@@ -247,7 +247,7 @@ class Runner # processful
     rescue Timeout::Error
       Process.kill(-9, pid) # -ve means kill process-group
       Process.detach(pid)   # prevent zombie-child
-      @status = 137          # don't wait for status from detach
+      @status = 137         # don't wait for status from detach
       @timed_out = true
     ensure
       w_stdout.close unless w_stdout.closed?
