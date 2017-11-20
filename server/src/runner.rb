@@ -181,29 +181,29 @@ class Runner # processful
     # In particular the methods
     #    o) update_tar_command
     #    o) install_coreutils_command
-    [
-      "chmod 755 #{tmp_dir}",
-      "&& cd #{tmp_dir}",
-      '&& tar',
-            '-zcf', # create a compressed tar file
-            '-',    # write it to stdout
-            '.',    # tar the current directory
-            '|',    # pipe the tarfile...
-                'docker exec', # ...into docker container
-                  "--user=#{uid}:#{gid}", # [1]
-                  '--interactive',
-                  container_name,
-                  'sh -c',
-                  "'",          # open quote
-                  "cd #{avatar_dir}",
-                  '&& tar',
-                        '--touch', # [2]
-                        '-zxf', # extract from a compressed tar file
-                        '-',    # which is read from stdin
-                        '-C',   # save the extracted files to
-                        '.',    # the current directory
-                  "'"           # close quote
-    ].join(space)
+    <<~SHELL.strip
+      chmod 755 #{tmp_dir} &&                                          \
+      cd #{tmp_dir} &&                                                 \
+      tar                                                              \
+        -zcf                           `# create tar file`             \
+        -                              `# write it to stdout`          \
+        .                              `# tar the current directory`   \
+        |                              `# pipe the tarfile...`         \
+          docker exec                  `# ...into docker container`    \
+            --user=#{uid}:#{gid}                                       \
+            --interactive                                              \
+            #{container_name}                                          \
+            sh -c                                                      \
+              '                        `# open quote`                  \
+              cd #{avatar_dir} &&                                      \
+              tar                                                      \
+                --touch                `# [1]`                         \
+                -zxf                   `# extract tar file`            \
+                -                      `# which is read from stdin`    \
+                -C                     `# save the extracted files to` \
+                .                      `# the current directory`       \
+              '                        `# close quote`
+    SHELL
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - -
