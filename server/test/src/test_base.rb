@@ -1,4 +1,4 @@
-require_relative '../hex_mini_test'
+require_relative 'hex_mini_test'
 require_relative '../../src/all_avatars_names'
 require_relative '../../src/externals'
 require_relative '../../src/runner'
@@ -173,7 +173,7 @@ class TestBase < HexMiniTest
       '[Ubuntu]'        => 'clangpp_assert'
     }
     row = rows.detect { |key,_| hex_test_name.start_with? key }
-    fail 'cannot find image_name from hex_test_name' if row.nil?
+    raise 'cannot find image_name from hex_test_name' if row.nil?
     "#{cdf}/" + row[1]
   end
 
@@ -182,7 +182,7 @@ class TestBase < HexMiniTest
   end
 
   def language_dir_from_image_name
-    fail 'image_name.nil? so cannot set language_dir' if image_name.nil?
+    raise 'image_name.nil? so cannot set language_dir' if image_name.nil?
     image_name.split('/')[1]
   end
 
@@ -250,7 +250,7 @@ class TestBase < HexMiniTest
   def assert_exec(cmd)
     stdout,stderr,status = exec(cmd)
     unless status == success
-      fail StandardError.new(cmd)
+      raise StandardError.new(cmd)
     end
     [stdout,stderr]
   end

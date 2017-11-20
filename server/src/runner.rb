@@ -297,7 +297,7 @@ class Runner # processful
   end
 
   def fail_image_name(message)
-    fail bad_argument("image_name:#{message}")
+    raise bad_argument("image_name:#{message}")
   end
 
   include ValidImageName
@@ -427,7 +427,7 @@ class Runner # processful
   end
 
   def fail_kata_id(message)
-    fail bad_argument("kata_id:#{message}")
+    raise bad_argument("kata_id:#{message}")
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -483,7 +483,7 @@ class Runner # processful
   end
 
   def fail_avatar_name(message)
-    fail bad_argument("avatar_name:#{message}")
+    raise bad_argument("avatar_name:#{message}")
   end
 
   include AllAvatarsNames
