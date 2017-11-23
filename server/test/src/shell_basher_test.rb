@@ -1,5 +1,6 @@
 require_relative 'test_base'
-require_relative '../../src/logger_spy'
+require_relative 'logger_spy'
+require_relative '../../src/logger_null'
 
 class ShellBasherTest < TestBase
 
