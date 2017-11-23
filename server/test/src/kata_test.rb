@@ -6,10 +6,6 @@ class KataTest < TestBase
     'FB0D4'
   end
 
-  def hex_setup
-    set_image_name "#{cdf}/gcc_assert"
-  end
-
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
   # positive test case
   # - - - - - - - - - - - - - - - - - - - - - - - - - -

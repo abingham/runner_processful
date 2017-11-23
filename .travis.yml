@@ -10,7 +10,6 @@ before_script:
 script:
     # pull images used by tests
     - docker pull cyberdojofoundation/gcc_assert
-    - docker pull cyberdojofoundation/java_cucumber_pico
     - docker pull cyberdojofoundation/clangpp_assert
 
     #

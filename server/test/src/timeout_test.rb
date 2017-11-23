@@ -17,7 +17,7 @@ class TimeoutTest < TestBase
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   test 'B2B',
-  %w( [gcc,assert]
+  %w( [Alpine]
       when run(test-code)
         does not complete in max_seconds
           and
@@ -27,7 +27,7 @@ class TimeoutTest < TestBase
           and
         the colour is timed_out
   ) do
-    gcc_assert_files['hiker.c'] = [
+    files['hiker.c'] = [
       '#include "hiker.h"',
       'int answer(void)',
       '{',
@@ -36,7 +36,7 @@ class TimeoutTest < TestBase
       '}'
     ].join("\n")
     named_args = {
-      changed_files:gcc_assert_files,
+      changed_files:files,
         max_seconds:2
     }
     assert_run_times_out(named_args)
@@ -46,7 +46,7 @@ class TimeoutTest < TestBase
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   test '4D7',
-  %w( [gcc,assert]
+  %w( [Alpine]
       when run(test-code)
         does not complete in max_seconds
           and
@@ -56,7 +56,7 @@ class TimeoutTest < TestBase
           and
         the colour is timed_out
     ) do
-    gcc_assert_files['hiker.c'] = [
+    files['hiker.c'] = [
       '#include "hiker.h"',
       '#include <stdio.h>',
       'int answer(void)',
@@ -67,17 +67,11 @@ class TimeoutTest < TestBase
       '}'
     ].join("\n")
     named_args = {
-      changed_files:gcc_assert_files,
+      changed_files:files,
         max_seconds:2
     }
     assert_run_times_out(named_args)
     refute_equal '', stdout
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def gcc_assert_files
-    files('gcc_assert')
   end
 
 end

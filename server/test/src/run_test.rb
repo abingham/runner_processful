@@ -6,10 +6,6 @@ class RunTest < TestBase
     '58410'
   end
 
-  def hex_setup
-    set_image_name "#{cdf}/gcc_assert"
-  end
-
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   test '8A9',

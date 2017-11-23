@@ -7,7 +7,6 @@ class AvatarTest < TestBase
   end
 
   def hex_setup
-    set_image_name 'cyberdojofoundation/gcc_assert'
     kata_new
   end
 

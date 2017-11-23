@@ -7,7 +7,6 @@ require 'json'
 class TestBase < HexMiniTest
 
   def kata_setup
-    set_image_name image_for_test
     kata_new
     avatar_new
   end
@@ -78,12 +77,8 @@ class TestBase < HexMiniTest
     named_args.key?(arg_name) ? named_args[arg_name] : arg_default
   end
 
-  def set_image_name(image_name)
-    @image_name = image_name
-  end
-
   def image_name
-    @image_name
+    @image_name ||= manifest['image_name']
   end
 
   def kata_id
@@ -134,16 +129,6 @@ class TestBase < HexMiniTest
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def assert_stdout_include(text)
-    assert stdout.include?(text), quad
-  end
-
-  def assert_stderr_include(text)
-    assert stderr.include?(text), quad
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
   def assert_cyber_dojo_sh(script, named_args={})
     named_args[:changed_files] = { 'cyber-dojo.sh' => script }
     assert_run_succeeds(named_args)
@@ -165,34 +150,30 @@ class TestBase < HexMiniTest
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def image_for_test
-    rows = {
-      '[gcc,assert]'    => 'gcc_assert',
-      '[Java,Cucumber]' => 'java_cucumber_pico',
-      '[Alpine]'        => 'gcc_assert',
-      '[Ubuntu]'        => 'clangpp_assert'
-    }
-    row = rows.detect { |key,_| hex_test_name.start_with? key }
-    raise 'cannot find image_name from hex_test_name' if row.nil?
-    "#{cdf}/" + row[1]
+  def files
+    @files ||= load_files
   end
 
-  def files(language_dir = language_dir_from_image_name)
-    @files ||= load_files(language_dir)
-  end
-
-  def language_dir_from_image_name
-    raise 'image_name.nil? so cannot set language_dir' if image_name.nil?
-    image_name.split('/')[1]
-  end
-
-  def load_files(language_dir)
-    dir = "/app/test/start_files/#{language_dir}"
-    json = JSON.parse(IO.read("#{dir}/manifest.json"))
-    set_image_name json['image_name']
-    Hash[json['visible_filenames'].collect { |filename|
-      [filename, IO.read("#{dir}/#{filename}")]
+  def load_files
+    Hash[manifest['visible_filenames'].collect { |filename|
+      [filename, IO.read("#{starting_files_dir}/#{filename}")]
     }]
+  end
+
+  def manifest
+    @manifest ||= JSON.parse(IO.read("#{starting_files_dir}/manifest.json"))
+  end
+
+  def starting_files_dir
+    "/app/test/start_files/#{os}"
+  end
+
+  def os
+    if hex_test_name.start_with? '[Ubuntu]'
+      :Ubuntu
+    else # [Alpine] || default
+      :Alpine
+    end
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
