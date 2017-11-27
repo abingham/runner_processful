@@ -39,7 +39,7 @@ class RunTest < TestBase
   test '3BA',
   'run with invalid avatar_name raises avatar_name' do
     error = assert_raises { run4({ avatar_name:'rod_father' }) }
-    assert_equal 'RunnerService:run:avatar_name:invalid', error.message
+    assert_equal 'RunnerService:run:avatar_name:!exists', error.message
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

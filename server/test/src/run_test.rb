@@ -97,7 +97,7 @@ class RunTest < TestBase
   test '7FE',
   %w( run with kata_id that exists but invalid avatar_name raises ) do
     in_kata {
-      assert_raises_avatar_name(kata_id, 'scissors', 'invalid')
+      assert_raises_avatar_name(kata_id, 'scissors', '!exists')
     }
   end
 

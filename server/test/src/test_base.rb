@@ -28,10 +28,6 @@ class TestBase < HexMiniTest
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def kata_exists?
-    runner.kata_exists?
-  end
-
   def kata_new
     runner.kata_new
   end
@@ -41,10 +37,6 @@ class TestBase < HexMiniTest
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def avatar_exists?(avatar_name = default_avatar_name)
-    runner.avatar_exists?(avatar_name)
-  end
 
   def avatar_new(avatar_name = default_avatar_name, the_files = files)
     runner.avatar_new(avatar_name, the_files)

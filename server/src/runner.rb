@@ -42,7 +42,8 @@ class Runner # processful
 
   def image_pull
     # [1] The contents of stderr vary depending on Docker version
-    _stdout,stderr,status = quiet_exec("docker pull #{image_name}")
+    docker_pull = "docker pull #{image_name}"
+    _stdout,stderr,status = shell.exec(docker_pull)
     if status == shell.success
       return true
     elsif stderr.include?('not found') || stderr.include?('not exist')
@@ -55,10 +56,6 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # kata
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def kata_exists?
-    container_exists?
-  end
 
   def kata_new
     refute_kata_exists
@@ -73,14 +70,6 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # avatar
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def avatar_exists?(avatar_name)
-    @avatar_name = avatar_name
-    assert_kata_exists
-    assert_valid_avatar_name
-    _stdout,_stderr,status = quiet_exec(docker_exec("[ -d #{avatar_dir} ]"))
-    status == shell.success
-  end
 
   def avatar_new(avatar_name, starting_files)
     @avatar_name = avatar_name
@@ -266,12 +255,8 @@ class Runner # processful
 
   def red_amber_green
     # @stdout and @stderr have been truncated and cleaned.
-    # In a crippled container (eg fork-bomb)
-    # the [docker exec] will mostly likely raise.
-    # Not worth creating a new container for this.
-    cmd = 'cat /usr/local/bin/red_amber_green.rb'
     begin
-      rag = eval(shell.assert(docker_exec(cmd)))
+      rag = eval(rag_lambda)
       colour = rag.call(@stdout, @stderr, @status).to_s
       # :nocov:
       unless ['red','amber','green'].include? colour
@@ -284,8 +269,24 @@ class Runner # processful
     end
   end
 
+  # - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def rag_lambda
+    # In a crippled container (eg fork-bomb)
+    # the [docker exec] will mostly likely raise.
+    # Not worth creating a new container for this.
+    cmd = 'cat /usr/local/bin/red_amber_green.rb'
+    begin
+      shell.assert(docker_exec(cmd))
+    # :nocov:
+    rescue
+      nil
+    # :nocov:
+    end
+  end
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # image_name
+  # image/container
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   attr_reader :image_name
@@ -302,8 +303,6 @@ class Runner # processful
 
   include ValidImageName
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # container
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def container_exists?
@@ -412,8 +411,10 @@ class Runner # processful
     end
   end
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # kata_id
+  def kata_exists?
+    container_exists?
+  end
+
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   attr_reader :kata_id
@@ -443,15 +444,21 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def assert_avatar_exists
-    unless avatar_exists?(avatar_name)
+    unless avatar_exists? #(avatar_name)
       fail_avatar_name('!exists')
     end
   end
 
   def refute_avatar_exists
-    if avatar_exists?(avatar_name)
+    if avatar_exists? #(avatar_name)
       fail_avatar_name('exists')
     end
+  end
+
+  def avatar_exists?
+    cmd = "[ -d #{avatar_dir} ] || printf 'not_found'"
+    stdout = shell.assert(docker_exec(cmd))
+    stdout != 'not_found'
   end
 
   def group
@@ -474,8 +481,6 @@ class Runner # processful
     '/sandboxes'
   end
 
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  # avatar_name
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   attr_reader :avatar_name
@@ -523,10 +528,6 @@ class Runner # processful
 
   def docker_exec(cmd)
     "docker exec #{container_name} sh -c '#{cmd}'"
-  end
-
-  def quiet_exec(cmd)
-    shell.exec(cmd, LoggerNull.new(self))
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
