@@ -1,4 +1,5 @@
 require_relative 'test_base'
+require_relative 'image_names'
 
 class RunnerTest < TestBase
 
@@ -8,11 +9,20 @@ class RunnerTest < TestBase
 
   # - - - - - - - - - - - - - - - - -
 
+  test 'D01',
+  %w( runner with valid image_name and valid kata_id does not raise ) do
+    valid_image_names.each do |image_name|
+      Runner.new(self, image_name, kata_id)
+    end
+  end
+
+  # - - - - - - - - - - - - - - - - -
+
   test 'A53',
   %w( runner with invalid image_name raises ) do
     invalid_image_names.each do |invalid_image_name|
       error = assert_raises(ArgumentError) {
-        Runner.new(self, invalid_image_name, '78307B424B')
+        Runner.new(self, invalid_image_name, kata_id)
       }
       assert_equal 'image_name:invalid', error.message
     end
@@ -24,36 +34,15 @@ class RunnerTest < TestBase
   %w( runner with invalid kata_id raises ) do
     invalid_kata_ids.each do |invalid_kata_id|
       error = assert_raises(ArgumentError) {
-        Runner.new(self, 'cdf/gcc_assert', invalid_kata_id)
+        Runner.new(self, "#{cdf}/gcc_assert", invalid_kata_id)
       }
       assert_equal 'kata_id:invalid', error.message
     end
   end
 
-  # - - - - - - - - - - - - - - - - -
-
-  test 'D01',
-  %w( runner with valid image_name and valid kata_id does not raise ) do
-    Runner.new(self, 'cdf/gcc_assert', kata_id)
-  end
-
   private
 
-  def invalid_image_names
-    [
-      '',             # nothing!
-      '_',            # cannot start with separator
-      'name_',        # cannot end with separator
-      'ALPHA/name',   # no uppercase
-      'alpha/name_',  # cannot end in separator
-      'alpha/_name',  # cannot begin with separator
-      'n:tag space',  # tags can't contain a space
-      'n:-tag',       # tags can't start with a -
-      'n:.tag',       # tags can't start with a .
-    ]
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  include ImageNames
 
   def invalid_kata_ids
     [

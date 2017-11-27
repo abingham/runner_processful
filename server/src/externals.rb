@@ -17,4 +17,3 @@ module Externals # mix-in
   end
 
 end
-

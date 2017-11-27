@@ -1,52 +1,62 @@
+require_relative 'runner_error'
 require 'open3'
 
 class ShellBasher
 
   def initialize(external)
-    @external = external
+    @log = external.log
   end
 
+  # - - - - - - - - - - - - - - - - - - - - -
+
   def assert(command)
-    stdout,stderr,status = exec(command)
+    stdout,stderr,status = open3capture3('assert', command)
     unless status == success
-      raise ArgumentError.new("command:#{command}")
+      raise RunnerError.new(info('assert', command, stdout, stderr, status))
     end
     stdout
   end
 
-  def exec(command, verbose = log)
-    begin
-      stdout,stderr,r = Open3.capture3(command)
-      status = r.exitstatus
-      unless status == success
-        verbose << line
-        verbose << "COMMAND:#{command}"
-        verbose << "STATUS:#{status}"
-        verbose << "STDOUT:#{stdout}"
-        verbose << "STDERR:#{stderr}"
-      end
-      [stdout, stderr, status]
-    rescue StandardError => error
-      log << line
-      log << "COMMAND:#{command}"
-      log << "RAISED-CLASS:#{error.class.name}"
-      log << "RAISED-TO_S:#{error.to_s}"
-      raise error
+  # - - - - - - - - - - - - - - - - - - - - -
+
+  def exec(command)
+    stdout,stderr,status = open3capture3('exec', command)
+    unless status == success
+      @log << info('exec', command, stdout, stderr, status)
     end
+    [stdout, stderr, status]
   end
+
+  # - - - - - - - - - - - - - - - - - - - - -
 
   def success
     0
   end
 
-  private
+  private # = = = = = = = = = = = = = = = = =
 
-  def log
-    @external.log
+  def open3capture3(method_name, command)
+    stdout,stderr,r = Open3.capture3(command)
+    [stdout, stderr, r.exitstatus]
+  rescue StandardError => error
+    raise RunnerError.new({
+      'command':shell_call(method_name, command),
+      'message':error.message
+    })
   end
 
-  def line
-    '-' * 40
+  # - - - - - - - - - - - - - - - - - - - - -
+
+  def info(method, command, stdout, stderr, status)
+    { 'command':shell_call(method, command),
+      'stdout':stdout,
+      'stderr':stderr,
+      'status':status
+    }
+  end
+
+  def shell_call(method, command)
+    "shell.#{method}(\"#{command}\")"
   end
 
 end

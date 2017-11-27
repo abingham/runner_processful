@@ -1,5 +1,4 @@
 require_relative 'all_avatars_names'
-require_relative 'logger_null'
 require_relative 'string_cleaner'
 require_relative 'string_truncater'
 require_relative 'valid_image_name'
@@ -92,7 +91,6 @@ class Runner # processful
   # run
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-=begin
   def run_cyber_dojo_sh(
     avatar_name,
     new_files, deleted_files, unchanged_files, changed_files,
@@ -102,7 +100,6 @@ class Runner # processful
     all_files = [*changed_files, *new_files].to_h
     run(avatar_name, deleted_files.keys, all_files, max_seconds)
   end
-=end
 
   def run(avatar_name, deleted_filenames, changed_files, max_seconds)
     @avatar_name = avatar_name
@@ -484,16 +481,6 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   attr_reader :avatar_name
-
-  def assert_valid_avatar_name
-    unless valid_avatar_name?
-      fail_avatar_name('invalid')
-    end
-  end
-
-  def valid_avatar_name?
-    all_avatars_names.include?(avatar_name)
-  end
 
   def fail_avatar_name(message)
     raise bad_argument("avatar_name:#{message}")
