@@ -1,53 +1,104 @@
+require_relative 'all_avatars_names'
 require_relative 'hex_mini_test'
 require_relative '../../src/runner_service'
+require 'json'
 
 class TestBase < HexMiniTest
+
+  def self.multi_os_test(hex_suffix, *lines, &block)
+    alpine_lines = ['[Alpine]'] + lines
+    test(hex_suffix+'0', *alpine_lines, &block)
+    ubuntu_lines = ['[Ubuntu]'] + lines
+    test(hex_suffix+'1', *ubuntu_lines, &block)
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def in_kata_as(name)
+    in_kata {
+      as(name) {
+        yield
+      }
+    }
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def runner
     RunnerService.new
   end
 
-  # - - - - - - - - - - - - - - - - - - - - - - -
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def image_pulled?(named_args={})
-    runner.image_pulled?(*defaulted_args(__method__, named_args))
+  def image_pulled?(named_args = {})
+    runner.image_pulled? *common_args(named_args)
   end
 
-  def image_pull(named_args={})
-    runner.image_pull(*defaulted_args(__method__, named_args))
+  def image_pull(named_args = {})
+    runner.image_pull *common_args(named_args)
   end
 
-  # - - - - - - - - - - - - - - - - - - - - - - -
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def kata_new(named_args={})
-    runner.kata_new(*defaulted_args(__method__, named_args))
+  def kata_new(named_args = {})
+    runner.kata_new *common_args(named_args)
   end
 
   def kata_old(named_args={})
-    runner.kata_old(*defaulted_args(__method__, named_args))
+    runner.kata_old *common_args(named_args)
   end
 
-  # - - - - - - - - - - - - - - - - - - - - - - -
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def avatar_new(named_args={})
-    runner.avatar_new(*defaulted_args(__method__, named_args))
+  def avatar_new(named_args = {})
+    args = common_args(named_args)
+    args << defaulted_arg(named_args, :avatar_name,    avatar_name)
+    args << defaulted_arg(named_args, :starting_files, starting_files)
+    runner.avatar_new *args
+    @avatar_name = args[-2]
+    @all_files = args[-1]
   end
 
-  def avatar_old(named_args={})
-    runner.avatar_old(*defaulted_args(__method__, named_args))
+  def avatar_old(named_args = {})
+    args = common_args(named_args)
+    args << defaulted_arg(named_args, :avatar_name, avatar_name)
+    runner.avatar_old *args
   end
 
-  # - - - - - - - - - - - - - - - - - - - - - - -
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def run4(named_args={})
-    # don't call this run() as it clashes with MiniTest
-    @quad = runner.run(*defaulted_args(__method__, named_args))
+  def run_cyber_dojo_sh(named_args = {})
+
+    unchanged_files = @all_files
+
+    changed_files = defaulted_arg(named_args, :changed_files, {})
+    changed_files.keys.each do |filename|
+      diagnostic = "#{filename} is not a changed_file (it does not already exist)"
+      assert unchanged_files.keys.include?(filename), diagnostic
+      unchanged_files.delete(filename)
+    end
+
+    new_files = defaulted_arg(named_args, :new_files, {})
+    new_files.keys.each do |filename|
+      diagnostic = "#{filename} is not a new_file (it already exists)"
+      refute unchanged_files.keys.include?(filename), diagnostic
+    end
+
+    args = common_args(named_args)
+    args << defaulted_arg(named_args, :avatar_name, avatar_name)
+    args << new_files
+    args << defaulted_arg(named_args, :deleted_files, {})
+    args << unchanged_files
+    args << changed_files
+    args << defaulted_arg(named_args, :max_seconds, 10)
+
+    @quad = runner.run_cyber_dojo_sh *args
+
+    @all_files = [ *unchanged_files, *changed_files, *new_files ].to_h
     nil
   end
 
-  def status
-    quad['status']
-  end
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def stdout
     quad['stdout']
@@ -57,113 +108,159 @@ class TestBase < HexMiniTest
     quad['stderr']
   end
 
-  def colour
-    quad['colour']
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def red?
+    colour == 'red'
   end
 
-  # - - - - - - - - - - - - - - - - - - - - - - -
-
-  def assert_stdout(expected)
-    assert_equal expected, stdout, quad
+  def amber?
+    colour == 'amber'
   end
 
-  def assert_stderr(expected)
-    assert_equal expected, stderr, quad
+  def green?
+    colour == 'green'
   end
 
-  def assert_status(expected)
-    assert_equal expected, status, quad
+  def timed_out?
+    colour == 'timed_out'
   end
 
-  def assert_colour(expected)
-    assert_equal expected, colour, quad
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def assert_cyber_dojo_sh(sh_script)
+    run_cyber_dojo_sh({
+      changed_files: { 'cyber-dojo.sh' => sh_script }
+    })
+    refute timed_out?, quad
+    assert_equal '', stderr
+    stdout.strip
   end
 
-  # - - - - - - - - - - - - - - - - - - - - - - -
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def assert_stdout_include(text)
-    assert stdout.include?(text), quad
+  def image_name
+    @image_name || manifest['image_name']
   end
 
-  def assert_stderr_include(text)
-    assert stderr.include?(text), quad
+  INVALID_IMAGE_NAME = '_cantStartWithSeparator'
+    VALID_IMAGE_NAME = 'cyberdojofoundation/gcc_assert'
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def kata_id
+    hex_test_id + '0' * (10 - hex_test_id.length)
   end
 
-  # - - - - - - - - - - - - - - - - - - - - - - -
+  INVALID_KATA_ID = '675'
 
-  def defaulted_args(method, named_args)
-    args = []
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-    args << defaulted_arg(named_args, :image_name, default_image_name)
-    args << defaulted_arg(named_args, :kata_id, default_kata_id)
-    return args if method == :image_pulled?
-    return args if method == :image_pull
-    return args if method == :kata_exists?
-    return args if method == :kata_new
-    return args if method == :kata_old
+  include AllAvatarsNames
 
-    args << defaulted_arg(named_args, :avatar_name, default_avatar_name)
-    return args if method == :avatar_exists?
-    return args if method == :avatar_old
+  def avatar_name
+    @avatar_name || salmon
+  end
 
-    if method == :avatar_new
-      args << defaulted_arg(named_args, :starting_files, files)
-      return args
+  def salmon
+    'salmon'
+  end
+
+  INVALID_AVATAR_NAME = 'sunglasses'
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def user_id
+    40000 + all_avatars_names.index(avatar_name)
+  end
+
+  def group_id
+    5000
+  end
+
+  def group
+    'cyber-dojo'
+  end
+
+  def home_dir
+    "/home/#{avatar_name}"
+  end
+
+  def sandbox_dir
+    "/sandboxes/#{avatar_name}"
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def starting_files
+    Hash[manifest['visible_filenames'].collect { |filename|
+      [filename, IO.read("#{starting_files_dir}/#{filename}")]
+    }]
+  end
+
+  def manifest
+    @manifest ||= JSON.parse(IO.read("#{starting_files_dir}/manifest.json"))
+  end
+
+  def starting_files_dir
+    "/app/test/start_files/#{os}"
+  end
+
+  def os
+    if hex_test_name.start_with? '[Ubuntu]'
+      return :Ubuntu
+    else # [Alpine] || default
+      :Alpine
     end
-
-    args << defaulted_arg(named_args, :deleted_filenames, [])
-    args << defaulted_arg(named_args, :changed_files, files)
-    args << defaulted_arg(named_args, :max_seconds, 10)
-    return args if method == :run4
   end
+
+  private
+
+  def common_args(named_args)
+    args = []
+    args << defaulted_arg(named_args, :image_name, image_name)
+    args << defaulted_arg(named_args, :kata_id,    kata_id)
+    args
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def in_kata
+    kata_new
+    begin
+      yield
+    ensure
+      kata_old
+    end
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def as(name, files = starting_files)
+    avatar_new({ avatar_name: name, starting_files: files })
+    begin
+      yield
+    ensure
+      avatar_old({ avatar_name: name })
+    end
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def defaulted_arg(named_args, arg_name, arg_default)
     named_args.key?(arg_name) ? named_args[arg_name] : arg_default
   end
 
-  def default_image_name
-    "#{cdf}/gcc_assert"
-  end
-
-  def default_kata_id
-    test_id + '0' * (10-test_id.length)
-  end
-
-  def default_avatar_name
-    'salmon'
-  end
-
-  def cdf
-    'cyberdojofoundation'
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - -
-
-  def files
-    @files ||= read_files
-  end
-
-  def read_files
-    filenames =%w( hiker.c hiker.h hiker.tests.c cyber-dojo.sh makefile )
-    Hash[filenames.collect { |filename|
-      [filename, IO.read("/app/test/start_files/gcc_assert/#{filename}")]
-    }]
-  end
-
-  def file_sub(name, from, to)
-    files[name] = files[name].sub(from, to)
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - -
-
-  def timed_out
-    'timed_out'
-  end
-
-  private
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def quad
     @quad
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def colour
+    quad['colour']
   end
 
 end

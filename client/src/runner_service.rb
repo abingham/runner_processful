@@ -32,14 +32,14 @@ class RunnerService
 
   # - - - - - - - - - - - - - - - - - - -
 
-  def run(image_name, kata_id, avatar_name, deleted_filenames, changed_files, max_seconds)
-    args = []
-    args << image_name
-    args << kata_id
-    args << avatar_name
-    args << deleted_filenames
-    args << changed_files
-    args << max_seconds
+  def run_cyber_dojo_sh(
+        image_name, kata_id, avatar_name,
+        new_files, deleted_files, unchanged_files, changed_files,
+        max_seconds
+    )
+    args  = [image_name, kata_id, avatar_name]
+    args += [new_files, deleted_files, unchanged_files, changed_files]
+    args += [max_seconds]
     post(__method__, *args)
   end
 
@@ -48,11 +48,11 @@ class RunnerService
   include HttpJsonService
 
   def hostname
-    'runner_processful'
+    ENV['CYBER_DOJO_RUNNER_SERVER_NAME']
   end
 
   def port
-    '4547'
+    ENV['CYBER_DOJO_RUNNER_SERVER_PORT']
   end
 
 end

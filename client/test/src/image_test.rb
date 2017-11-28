@@ -3,62 +3,26 @@ require_relative 'test_base'
 class ImageTest < TestBase
 
   def self.hex_prefix
-    '4CD0A7F'
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - -
-  # image_pulled?
-  # - - - - - - - - - - - - - - - - - - - - -
-
-  test '5EC',
-  'image_pulled?(valid but unpulled image_name) is false' do
-    assert_equal false, image_pulled?({image_name:'lazybox'})
+    '4CD0A'
   end
 
   # - - - - - - - - - - - - - - - - - - - - -
 
-  test 'B22',
-  'image_pulled?(valid and pulled image_name) is true' do
-    image_pull({image_name:'busybox'})
-    assert_equal true, image_pulled?({image_name:'busybox'})
+  multi_os_test 'B21',
+  %w( pull is false when image_name repository does not exist,
+      pull is true  when image_name is valid and exists ) do
+    refute image_pull({ image_name: 'docker/lazybox' })
+    assert image_pull({ image_name: VALID_IMAGE_NAME } )
   end
 
   # - - - - - - - - - - - - - - - - - - - - -
 
-  test 'D71',
-  'image_pulled?(invalid_image name) raises' do
-    error = assert_raises(StandardError) {
-      image_pulled?({image_name:'_cantStartWithSeparator'})
-    }
-    expected = 'RunnerService:image_pulled?:image_name:invalid'
-    assert_equal expected, error.message
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - -
-  # pull
-  # - - - - - - - - - - - - - - - - - - - - -
-
-  test 'A82',
-  'image_pull(valid and existing image_name) returns true' do
-    assert_equal true, image_pull({image_name:"#{cdf}/gcc_assert"})
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - -
-
-  test '667',
-  'image_pull(valid non-existing image_name) returns false' do
-    assert_equal false, image_pull({image_name:"#{cdf}/lazybox"})
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - -
-
-  test '1A7',
-  'image_pull(invalid_image name) raises' do
-    error = assert_raises(StandardError) {
-      image_pull({image_name:'_cantStartWithSeparator'})
-    }
-    expected = 'RunnerService:image_pull:image_name:invalid'
-    assert_equal expected, error.message
+  multi_os_test 'EF4',
+  %w( pulled? is false when image_name is valid but unpulled,
+      pulled? is true  when image_name is valid and pulled ) do
+    refute image_pulled?({ image_name: 'lazybox' })
+    image_pull({ image_name: VALID_IMAGE_NAME })
+    assert image_pulled?({ image_name: VALID_IMAGE_NAME })
   end
 
 end

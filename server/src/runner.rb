@@ -73,6 +73,7 @@ class Runner # processful
   def avatar_new(avatar_name, starting_files)
     @avatar_name = avatar_name
     assert_kata_exists
+    assert_valid_avatar_name
     refute_avatar_exists
     make_and_chown_dirs
     write_files(starting_files)
@@ -83,6 +84,7 @@ class Runner # processful
   def avatar_old(avatar_name)
     @avatar_name = avatar_name
     assert_kata_exists
+    assert_valid_avatar_name
     assert_avatar_exists
     remove_avatar_dir
   end
@@ -104,6 +106,7 @@ class Runner # processful
   def run(avatar_name, deleted_filenames, changed_files, max_seconds)
     @avatar_name = avatar_name
     assert_kata_exists
+    assert_valid_avatar_name
     assert_avatar_exists
     delete_files(deleted_filenames)
     write_files(changed_files)
@@ -440,14 +443,24 @@ class Runner # processful
   # avatar
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  def assert_valid_avatar_name
+    unless valid_avatar_name?
+      fail_avatar_name('invalid')
+    end
+  end
+
+  def valid_avatar_name?
+    all_avatars_names.include?(avatar_name)
+  end
+
   def assert_avatar_exists
-    unless avatar_exists? #(avatar_name)
+    unless avatar_exists?
       fail_avatar_name('!exists')
     end
   end
 
   def refute_avatar_exists
-    if avatar_exists? #(avatar_name)
+    if avatar_exists?
       fail_avatar_name('exists')
     end
   end
