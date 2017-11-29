@@ -114,20 +114,20 @@ class Runner # processful
 
   private # = = = = = = = = = = = = = = = = = = =
 
+  def delete_files(filenames)
+    filenames.each do |filename|
+      shell.assert(docker_exec("rm #{sandbox_dir}/#{filename}"))
+    end
+  end
+
+  # - - - - - - - - - - - - - - - - - - - - - - - -
+
   def write_files(files)
     unless files == {}
       Dir.mktmpdir do |tmp_dir|
         save_to(files, tmp_dir)
         shell.assert(tar_pipe_from(tmp_dir))
       end
-    end
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def delete_files(filenames)
-    filenames.each do |filename|
-      shell.assert(docker_exec("rm #{sandbox_dir}/#{filename}"))
     end
   end
 
