@@ -326,7 +326,7 @@ class Runner # processful
       'docker run',
       args,
       image_name,
-      "sh -c '([ -f #{init_filename}] && #{init_filename}); sleep 3h'"
+      "sh -c '([ -f #{init_filename} ] && #{init_filename}); sleep 3h'"
     ].join(space)
 
     shell.assert(docker_run)
