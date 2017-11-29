@@ -73,7 +73,6 @@ class Runner # processful
   def avatar_new(avatar_name, starting_files)
     @avatar_name = avatar_name
     assert_kata_exists
-    assert_valid_avatar_name
     refute_avatar_exists
     make_and_chown_dirs
     write_files(starting_files)
@@ -84,7 +83,6 @@ class Runner # processful
   def avatar_old(avatar_name)
     @avatar_name = avatar_name
     assert_kata_exists
-    assert_valid_avatar_name
     assert_avatar_exists
     remove_sandbox_dir
   end
@@ -100,7 +98,6 @@ class Runner # processful
   )
     @avatar_name = avatar_name
     assert_kata_exists
-    assert_valid_avatar_name
     assert_avatar_exists
     unchanged_files = nil # we're stateful
     all_files = [*changed_files, *new_files].to_h
@@ -439,23 +436,15 @@ class Runner # processful
   # avatar
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def assert_valid_avatar_name
-    unless valid_avatar_name?
-      fail_avatar_name('invalid')
-    end
-  end
-
-  def valid_avatar_name?
-    all_avatars_names.include?(avatar_name)
-  end
-
   def assert_avatar_exists
+    assert_valid_avatar_name
     unless avatar_exists?
       fail_avatar_name('!exists')
     end
   end
 
   def refute_avatar_exists
+    assert_valid_avatar_name
     if avatar_exists?
       fail_avatar_name('exists')
     end
@@ -466,6 +455,20 @@ class Runner # processful
     stdout = shell.assert(docker_exec(cmd))
     stdout != 'not_found'
   end
+
+  def assert_valid_avatar_name
+    unless valid_avatar_name?
+      fail_avatar_name('invalid')
+    end
+  end
+
+  def valid_avatar_name?
+    all_avatars_names.include?(avatar_name)
+  end
+
+  include AllAvatarsNames
+
+  # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   def group
     'cyber-dojo'
@@ -494,8 +497,6 @@ class Runner # processful
   def fail_avatar_name(message)
     raise bad_argument("avatar_name:#{message}")
   end
-
-  include AllAvatarsNames
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # dirs
