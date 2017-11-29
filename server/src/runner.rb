@@ -36,7 +36,7 @@ class Runner # processful
 
   def image_pulled?
     cmd = 'docker images --format "{{.Repository}}"'
-    shell.assert(cmd).split("\n").include? image_name
+    shell.assert(cmd).split("\n").include?(image_name)
   end
 
   def image_pull
@@ -86,7 +86,7 @@ class Runner # processful
     assert_kata_exists
     assert_valid_avatar_name
     assert_avatar_exists
-    remove_avatar_dir
+    remove_sandbox_dir
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -130,7 +130,7 @@ class Runner # processful
 
   def delete_files(filenames)
     filenames.each do |filename|
-      shell.assert(docker_exec("rm #{avatar_dir}/#{filename}"))
+      shell.assert(docker_exec("rm #{sandbox_dir}/#{filename}"))
     end
   end
 
@@ -180,7 +180,7 @@ class Runner # processful
             #{container_name}                                          \
             sh -c                                                      \
               '                        `# open quote`                  \
-              cd #{avatar_dir} &&                                      \
+              cd #{sandbox_dir} &&                                     \
               tar                                                      \
                 --touch                `# [1]`                         \
                 -zxf                   `# extract tar file`            \
@@ -462,7 +462,7 @@ class Runner # processful
   end
 
   def avatar_exists?
-    cmd = "[ -d #{avatar_dir} ] || printf 'not_found'"
+    cmd = "[ -d #{sandbox_dir} ] || printf 'not_found'"
     stdout = shell.assert(docker_exec(cmd))
     stdout != 'not_found'
   end
@@ -479,7 +479,7 @@ class Runner # processful
     40000 + all_avatars_names.index(avatar_name)
   end
 
-  def avatar_dir
+  def sandbox_dir
     "#{sandboxes_root_dir}/#{avatar_name}"
   end
 
@@ -505,13 +505,13 @@ class Runner # processful
     # first avatar makes the shared dir
     shared_dir = "#{sandboxes_root_dir}/shared"
     shell.assert(docker_exec("mkdir -p -m 775 #{shared_dir} || true"))
-    shell.assert(docker_exec("mkdir -p -m 755 #{avatar_dir}"))
+    shell.assert(docker_exec("mkdir -p -m 755 #{sandbox_dir}"))
     shell.assert(docker_exec("chown root:#{group} #{shared_dir}"))
-    shell.assert(docker_exec("chown #{uid}:#{gid} #{avatar_dir}"))
+    shell.assert(docker_exec("chown #{uid}:#{gid} #{sandbox_dir}"))
   end
 
-  def remove_avatar_dir
-    shell.assert(docker_exec("rm -rf #{avatar_dir}"))
+  def remove_sandbox_dir
+    shell.assert(docker_exec("rm -rf #{sandbox_dir}"))
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -564,7 +564,7 @@ end
 #
 # require 'open3'
 # files.each do |name,content|
-#   filename = avatar_dir + '/' + name
+#   filename = sandbox_dir + '/' + name
 #   dir = File.dirname(filename)
 #   shell_cmd = "mkdir -p #{dir};"
 #   shell_cmd += "cat > #{filename} && chown #{uid}:#{gid} #{filename}"
