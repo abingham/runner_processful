@@ -98,18 +98,14 @@ class Runner # processful
     new_files, deleted_files, unchanged_files, changed_files,
     max_seconds
   )
-    unchanged_files = nil # we're stateful
-    all_files = [*changed_files, *new_files].to_h
-    run(avatar_name, deleted_files.keys, all_files, max_seconds)
-  end
-
-  def run(avatar_name, deleted_filenames, changed_files, max_seconds)
     @avatar_name = avatar_name
     assert_kata_exists
     assert_valid_avatar_name
     assert_avatar_exists
-    delete_files(deleted_filenames)
-    write_files(changed_files)
+    unchanged_files = nil # we're stateful
+    all_files = [*changed_files, *new_files].to_h
+    delete_files(deleted_files.keys)
+    write_files(all_files)
     run_timeout_cyber_dojo_sh(max_seconds)
     colour = @timed_out ? 'timed_out' : red_amber_green
     { stdout:@stdout,
