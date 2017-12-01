@@ -298,7 +298,7 @@ class ApiTest < TestBase
         changed_files: { 'hiker.c' => fork_bomb }
       })
       assert timed_out? ||
-        printed('All tests passed') ||
+        printed?('All tests passed') ||
           printed?('fork()'), quad
     }
   end
@@ -313,8 +313,8 @@ class ApiTest < TestBase
       })
       cant_fork = (os == :Alpine ? "can't fork" : 'Cannot fork')
       assert timed_out? ||
-        printed(cant_fork) ||
-          printed('bomb'), quad
+        printed?(cant_fork) ||
+          printed?('bomb'), quad
     }
   end
 
@@ -326,9 +326,9 @@ class ApiTest < TestBase
       run_cyber_dojo_sh({
         changed_files: { 'hiker.c' => exhaust_file_handles }
       })
-      assert seen?('All tests passed'), quad
-      assert seen?('fopen() != NULL'),  quad
-      assert seen?('fopen() == NULL'),  quad
+      assert printed?('All tests passed'), quad
+      assert printed?('fopen() != NULL'),  quad
+      assert printed?('fopen() == NULL'),  quad
     }
   end
 
@@ -634,13 +634,6 @@ class ApiTest < TestBase
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def printed(text)
-    count = (stdout+stderr).lines.count { |line| line.include?(text) }
-    count > 0
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - - - -
-
   def exhaust_file_handles
     [
       '#include <stdio.h>',
@@ -665,7 +658,9 @@ class ApiTest < TestBase
     ].join("\n")
   end
 
-  def seen?(text)
+  # - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  def printed?(text)
     count = (stdout+stderr).lines.count { |line| line.include?(text) }
     count > 0
   end
