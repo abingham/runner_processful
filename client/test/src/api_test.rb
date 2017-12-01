@@ -297,8 +297,9 @@ class ApiTest < TestBase
       run_cyber_dojo_sh({
         changed_files: { 'hiker.c' => fork_bomb }
       })
-      assert_timed_out_or_printed 'All tests passed'
-      assert_timed_out_or_printed 'fork()'
+      assert timed_out? ||
+        printed('All tests passed') ||
+          printed?('fork()'), quad
     }
   end
 
@@ -311,8 +312,9 @@ class ApiTest < TestBase
         changed_files: { 'cyber-dojo.sh' => shell_fork_bomb }
       })
       cant_fork = (os == :Alpine ? "can't fork" : 'Cannot fork')
-      assert_timed_out_or_printed cant_fork
-      assert_timed_out_or_printed 'bomb'
+      assert timed_out? ||
+        printed(cant_fork) ||
+          printed('bomb'), quad
     }
   end
 
@@ -632,9 +634,9 @@ class ApiTest < TestBase
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  def assert_timed_out_or_printed(text)
+  def printed(text)
     count = (stdout+stderr).lines.count { |line| line.include?(text) }
-    assert (timed_out? || count > 0), ":#{text}:#{quad}:"
+    count > 0
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
