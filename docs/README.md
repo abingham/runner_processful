@@ -15,6 +15,7 @@ alt="cyber-dojo yin/yang logo" width="50px" height="50px"/>
 
 - A docker-containerized stateful micro-service for [cyber-dojo](http://cyber-dojo.org)
 - Runs an avatar's tests.
+- A long-lived container holds the state of each practice session.
 
 API:
   * All methods receive their named arguments in a json hash.
