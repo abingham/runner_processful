@@ -249,6 +249,10 @@ class Runner # processful
   def red_amber_green
     # @stdout and @stderr have been truncated and cleaned.
     begin
+      # In a crippled container (eg fork-bomb)
+      # the [docker exec] will mostly likely raise.
+      cat_cmd = 'cat /usr/local/bin/red_amber_green.rb'
+      rag_lambda = shell.assert(docker_exec(cat_cmd))
       rag = eval(rag_lambda)
       colour = rag.call(@stdout, @stderr, @status).to_s
       # :nocov:
@@ -259,22 +263,6 @@ class Runner # processful
     rescue
       'amber'
       # :nocov:
-    end
-  end
-
-  # - - - - - - - - - - - - - - - - - - - - - - - -
-
-  def rag_lambda
-    # In a crippled container (eg fork-bomb)
-    # the [docker exec] will mostly likely raise.
-    # Not worth creating a new container for this.
-    cmd = 'cat /usr/local/bin/red_amber_green.rb'
-    begin
-      shell.assert(docker_exec(cmd))
-    # :nocov:
-    rescue
-      nil
-    # :nocov:
     end
   end
 
