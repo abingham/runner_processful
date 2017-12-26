@@ -303,7 +303,6 @@ class Runner # processful
     args = [
       '--detach',                 # for later exec
       '--init',                   # pid-1 process
-      '--interactive',            # for tar-pipe
       limits,
       "--name=#{container_name}", # for easy clean up
       '--user=root'               # chown permission
