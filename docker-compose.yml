@@ -7,7 +7,7 @@ services:
     user: nobody
     image: cyberdojo/runner_processful_client
     init: true
-    container_name: runner_processful_client
+    container_name: test_runner_processful_client
     read_only: true
     tmpfs: /tmp
     depends_on:
@@ -29,7 +29,7 @@ services:
     user: root
     image: cyberdojo/runner_processful
     init: true
-    container_name: runner_processful_server
+    container_name: test_runner_processful_server
     read_only: true
     tmpfs: /tmp
     volumes:
