@@ -13,8 +13,8 @@ services:
     depends_on:
       - runner_processful
     environment:
-      - CYBER_DOJO_RUNNER_SERVER_NAME
-      - CYBER_DOJO_RUNNER_SERVER_PORT
+      - CYBER_DOJO_RUNNER_SERVICE_NAME
+      - CYBER_DOJO_RUNNER_SERVICE_PORT
       - CYBER_DOJO_COVERAGE_ROOT
     build:
       context: client
@@ -33,10 +33,10 @@ services:
     read_only: true
     tmpfs: /tmp
     volumes:
-      - '/var/run/docker.sock:/var/run/docker.sock'
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - CYBER_DOJO_COVERAGE_ROOT
     build:
       context: server
       args:
-        - PORT=${CYBER_DOJO_RUNNER_SERVER_PORT}
+        - PORT=${CYBER_DOJO_RUNNER_SERVICE_PORT}
