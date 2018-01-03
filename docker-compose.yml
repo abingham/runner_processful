@@ -4,39 +4,46 @@ version: '2.2'
 services:
 
   runner_processful_client:
+    build:
+      context: client
+      args:
+        - CYBER_DOJO_RUNNER_HOME=${CYBER_DOJO_RUNNER_HOME}
+        - PORT=${CYBER_DOJO_RUNNER_CLIENT_PORT}
     user: nobody
     image: cyberdojo/runner_processful_client
     init: true
     container_name: test_runner_processful_client
     read_only: true
     tmpfs: /tmp
+    restart: 'no'
     depends_on:
       - runner_processful
+    volumes:
+      - ./client/test:${CYBER_DOJO_RUNNER_HOME}/test:ro
     environment:
       - CYBER_DOJO_RUNNER_SERVICE_NAME
       - CYBER_DOJO_RUNNER_SERVICE_PORT
       - CYBER_DOJO_COVERAGE_ROOT
-    build:
-      context: client
-      args:
-        - PORT=${CYBER_DOJO_RUNNER_CLIENT_PORT}
     ports:
       - ${CYBER_DOJO_RUNNER_CLIENT_PORT}:${CYBER_DOJO_RUNNER_CLIENT_PORT}
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   runner_processful:
+    build:
+      context: server
+      args:
+        - CYBER_DOJO_RUNNER_HOME=${CYBER_DOJO_RUNNER_HOME}
+        - PORT=${CYBER_DOJO_RUNNER_SERVICE_PORT}
     user: root
     image: cyberdojo/runner_processful
     init: true
     container_name: test_runner_processful_server
     read_only: true
     tmpfs: /tmp
+    restart: 'no'
     volumes:
+      - ./server/test:${CYBER_DOJO_RUNNER_HOME}/test:ro
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - CYBER_DOJO_COVERAGE_ROOT
-    build:
-      context: server
-      args:
-        - PORT=${CYBER_DOJO_RUNNER_SERVICE_PORT}
