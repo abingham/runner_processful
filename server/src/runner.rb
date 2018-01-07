@@ -510,7 +510,9 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - - - - - - - -
 
   def docker_exec(cmd)
-    "docker exec #{container_name} sh -c '#{cmd}'"
+    # This is _not_ the main docker-exec
+    # for run_cyber_dojo_sh
+    "docker exec --user=root #{container_name} sh -c '#{cmd}'"
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
