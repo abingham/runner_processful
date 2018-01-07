@@ -379,6 +379,8 @@ class Runner # processful
   # kata
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+  attr_reader :kata_id
+
   def assert_kata_exists
     unless kata_exists?
       fail_kata_id('!exists')
@@ -396,8 +398,6 @@ class Runner # processful
   end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  attr_reader :kata_id
 
   def assert_valid_kata_id
     unless valid_kata_id?
@@ -422,6 +422,8 @@ class Runner # processful
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   # avatar
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  attr_reader :avatar_name
 
   def assert_avatar_exists
     assert_valid_avatar_name
@@ -454,6 +456,10 @@ class Runner # processful
   end
 
   include AllAvatarsNames
+
+  def fail_avatar_name(message)
+    raise bad_argument("avatar_name:#{message}")
+  end
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
