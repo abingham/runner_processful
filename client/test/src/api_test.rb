@@ -293,7 +293,11 @@ class ApiTest < TestBase
 
   test 'CD5',
   '[C,assert] fork-bomb does not run indefinitely' do
-    puts "C fork-bomb off as it creates a zombie container that cannot be rm'd"
+    puts "C fork-bomb test off; it creates a zombie container that cant be rm'd"
+    puts "I believe this is because cyber-dojo.sh is being executed via a"
+    puts "[docker exec] call which, unless [docker run] call does not have"
+    puts "signals forwarding/proxying turned on. For example, [docker run]"
+    puts "has a [--sig-proxy] option and [docker exec] does not"
     skip
     in_kata_as(salmon) {
       run_cyber_dojo_sh({
