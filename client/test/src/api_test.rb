@@ -293,7 +293,7 @@ class ApiTest < TestBase
 
   test 'CD5',
   '[C,assert] fork-bomb does not run indefinitely' do
-    p "C fork-bomb off as it creates a zombie container that cannot be rm'd"
+    puts "C fork-bomb off as it creates a zombie container that cannot be rm'd"
     skip
     in_kata_as(salmon) {
       run_cyber_dojo_sh({
