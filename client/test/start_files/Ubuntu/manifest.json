@@ -1,17 +1,18 @@
+
 {
-  "display_name": "C (gcc), assert",
+  "display_name": "Perl, Test::Simple",
 
   "visible_filenames": [
-     "hiker.tests.c",
-     "hiker.c",
-     "hiker.h",
-     "makefile",
-     "cyber-dojo.sh"
+    "hiker.t",
+    "hiker.perl",
+    "cyber-dojo.sh"
   ],
 
-  "image_name": "cyberdojofoundation/clangpp_assert",
+  "image_name": "cyberdojofoundation/perl_test_simple",
 
-  "runner_choice": "stateless",
+  "runner_choice": "processful",
 
-  "filename_extension" : ".c"
+  "filename_extension" : ".pl",
+
+  "tab_size": 4
 }

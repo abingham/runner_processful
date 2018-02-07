@@ -13,6 +13,7 @@ class HexMiniTest < MiniTest::Test
       hex_name = lines.join(space = ' ')
       execute_around = lambda {
         _hex_setup_caller(hex_id, hex_name)
+        print hex_id
         begin
           self.instance_eval &test_block
         ensure
