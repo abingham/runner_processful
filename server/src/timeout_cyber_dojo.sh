@@ -25,7 +25,12 @@ if [ $? -eq 0 ]; then
   readonly PS_AVATAR=${AVATAR_NAME}
 fi
 
-su ${AVATAR_NAME} -c "timeout -s KILL ${MAX_SECONDS}s sh ./cyber-dojo.sh"
+grep -q -c Debian /etc/issue >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+  readonly PS_AVATAR=${AVATAR_NAME}
+fi
+
+/dev/init -s -g -- su ${AVATAR_NAME} -c "timeout -s KILL ${MAX_SECONDS}s sh ./cyber-dojo.sh"
 status=$?
 ps -o user,pid | grep "^${PS_AVATAR}\s" | awk '{print $2}' | xargs -r kill -9 >/dev/null 2>&1
 exit ${status}
