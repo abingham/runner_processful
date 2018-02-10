@@ -300,6 +300,9 @@ class ApiTest < TestBase
     puts "has a [--sig-proxy] option and [docker exec] does not"
     puts "See https://github.com/moby/moby/issues/28872"
     puts "See https://github.com/moby/moby/issues/9098"
+    puts "It could be related to the --init option which creates a"
+    puts "/dev/init for the [docker run] container; there is no"
+    puts "comparable --init option for [docker exec]"
     skip
     in_kata_as(salmon) {
       run_cyber_dojo_sh({
@@ -315,7 +318,7 @@ class ApiTest < TestBase
 
   multi_os_test 'CD6',
   'shell fork-bomb does not run indefinitely' do
-    puts "shell fork-bomb off as it does not complete"
+    puts "shell fork-bomb off; it creates a zombie container"
     skip
     in_kata_as(salmon) {
       run_cyber_dojo_sh({
