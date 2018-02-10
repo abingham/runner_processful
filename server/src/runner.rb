@@ -344,6 +344,8 @@ class Runner # processful
       ulimit('nofile', 256),   # number of files
       ulimit('nproc',  128),   # number of processes
       ulimit('stack',  8*MB),  # stack size
+      '--cpu-shares=128',
+      '--cpus=0.5',
       '--memory=512m',         # ram
       '--net=none',                      # no network
       '--pids-limit=128',                # no fork bombs
