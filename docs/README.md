@@ -1,15 +1,12 @@
 
-* [Take me to cyber-dojo's home github repo](https://github.com/cyber-dojo/cyber-dojo).
-* [Take me to the http://cyber-dojo.org site](http://cyber-dojo.org).
-
-![cyber-dojo.org home page](https://github.com/cyber-dojo/cyber-dojo/blob/master/shared/home_page_snaphot.png)
-
-- - - -
-
 [![Build Status](https://travis-ci.org/cyber-dojo/runner_processful.svg?branch=master)](https://travis-ci.org/cyber-dojo/runner_processful)
 
 <img src="https://raw.githubusercontent.com/cyber-dojo/nginx/master/images/home_page_logo.png"
 alt="cyber-dojo yin/yang logo" width="50px" height="50px"/>
+
+Experimental. Not live.
+There are issues securing a process run inside a container using
+'docker exec' as opposed to 'docker run'.
 
 # cyberdojo/runner_processful docker image
 
@@ -205,3 +202,11 @@ If the runner-client's IP address is 192.168.99.100 then put
 # demo screenshot
 
 ![red amber green demo](red_amber_green_demo.png?raw=true "red amber green demo")
+
+- - - -
+
+* [Take me to cyber-dojo's home github repo](https://github.com/cyber-dojo/cyber-dojo).
+* [Take me to the http://cyber-dojo.org site](http://cyber-dojo.org).
+
+![cyber-dojo.org home page](https://github.com/cyber-dojo/cyber-dojo/blob/master/shared/home_page_snaphot.png)
+
