@@ -24,5 +24,5 @@ docker-compose \
   up -d \
   --force-recreate
 
-wait_till_up 'test_runner_processful_server'
-wait_till_up 'test_runner_processful_client'
+wait_till_up 'test-runner-processful-server'
+wait_till_up 'test-runner-processful-client'
