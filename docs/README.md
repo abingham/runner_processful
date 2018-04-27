@@ -1,5 +1,5 @@
 
-[![Build Status](https://travis-ci.org/cyber-dojo/runner_processful.svg?branch=master)](https://travis-ci.org/cyber-dojo/runner_processful)
+[![Build Status](https://travis-ci.org/cyber-dojo/runner-processful.svg?branch=master)](https://travis-ci.org/cyber-dojo/runner-processful)
 
 <img src="https://raw.githubusercontent.com/cyber-dojo/nginx/master/images/home_page_logo.png"
 alt="cyber-dojo yin/yang logo" width="50px" height="50px"/>
@@ -8,7 +8,7 @@ Experimental. Not live.
 There are issues securing a process run inside a container using
 'docker exec' as opposed to 'docker run'.
 
-# cyberdojo/runner_processful docker image
+# cyberdojo/runner-processful docker image
 
 - A docker-containerized stateful micro-service for [cyber-dojo](http://cyber-dojo.org)
 - Runs an avatar's tests.

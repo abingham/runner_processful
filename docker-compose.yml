@@ -3,21 +3,21 @@ version: '2.2'
 
 services:
 
-  runner_processful_client:
+  runner-processful-client:
     build:
       context: client
       args:
         - CYBER_DOJO_RUNNER_HOME=${CYBER_DOJO_RUNNER_HOME}
         - PORT=${CYBER_DOJO_RUNNER_CLIENT_PORT}
     user: nobody
-    image: cyberdojo/runner_processful_client
+    image: cyberdojo/runner-processful-client
     init: true
-    container_name: test_runner_processful_client
+    container_name: test-runner-processful-client
     read_only: true
     tmpfs: /tmp
     restart: 'no'
     depends_on:
-      - runner_processful
+      - runner-processful
     environment:
       - CYBER_DOJO_RUNNER_SERVICE_NAME
       - CYBER_DOJO_RUNNER_SERVICE_PORT
@@ -27,16 +27,16 @@ services:
 
   # - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  runner_processful:
+  runner-processful:
     build:
       context: server
       args:
         - CYBER_DOJO_RUNNER_HOME=${CYBER_DOJO_RUNNER_HOME}
         - PORT=${CYBER_DOJO_RUNNER_SERVICE_PORT}
     user: root
-    image: cyberdojo/runner_processful
+    image: cyberdojo/runner-processful
     init: true
-    container_name: test_runner_processful_server
+    container_name: test-runner-processful-server
     read_only: true
     tmpfs: /tmp
     restart: 'no'
