@@ -17,7 +17,7 @@ require 'timeout'
 #   o) avatars can share state.
 #   o) avatars can share processes.
 #   o) fastest run(). In a rough sample
-#      ~30% faster than runner_stateful
+#      ~30% faster than runner-stateful
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class Runner # processful
